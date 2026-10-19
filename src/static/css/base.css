@@ -5,12 +5,68 @@ body {
   background: #f5f7fa;
 }
 
-.inicio {
-  max-width: 640px;
-  margin: 15vh auto 0;
-  padding: 0 16px;
+.tarjeta {
+  max-width: 360px;
+  margin: 12vh auto 0;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e1e5ea;
+  border-radius: 8px;
 }
 
-.inicio h1 {
+.tarjeta.ancha {
+  max-width: 640px;
+}
+
+.tarjeta h1 {
+  margin: 0;
   color: #0b6e4f;
+}
+
+.tarjeta h2 {
+  font-size: 1.1rem;
+}
+
+.sub {
+  margin-top: 4px;
+  color: #616e7c;
+}
+
+.tarjeta form label {
+  display: block;
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+.tarjeta form input[type="text"],
+.tarjeta form input[type="password"] {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #cbd2d9;
+  border-radius: 4px;
+}
+
+button {
+  margin-top: 16px;
+  padding: 8px 16px;
+  color: #fff;
+  background: #0b6e4f;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.error {
+  color: #b42318;
+}
+
+.acciones {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.acciones button {
+  margin: 0;
 }

@@ -7,5 +7,6 @@ admin.site.index_title = "Administración"
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("territorio/", include("territorio.urls")),
     path("", include("core.urls")),
 ]

@@ -2,3 +2,4 @@ Django==5.2.8
 psycopg[binary]==3.2.10
 gunicorn==23.0.0
 whitenoise==6.9.0
+django-simple-history==3.10.1

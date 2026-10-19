@@ -52,6 +52,9 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: 5432
+      # Anula las rutas de Windows si el .env es el de la PC (en Linux GDAL se encuentra solo).
+      GDAL_LIBRARY_PATH: ""
+      GEOS_LIBRARY_PATH: ""
       DJANGO_ALLOWED_HOSTS: ${DOMINIO}
       DJANGO_CSRF_TRUSTED_ORIGINS: https://${DOMINIO}
     volumes:

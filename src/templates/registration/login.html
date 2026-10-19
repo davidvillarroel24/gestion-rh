@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block titulo %}Ingresar{% endblock %}
+
+{% block contenido %}
+<main class="tarjeta">
+  <h1>Gestión RH</h1>
+  <p class="sub">SDMAyRH — Gobernación de Cochabamba</p>
+
+  {% if form.errors %}
+    <p class="error">Usuario o contraseña incorrectos.</p>
+  {% endif %}
+
+  <form method="post" action="{% url 'core:ingresar' %}">
+    {% csrf_token %}
+    <label for="id_username">Usuario</label>
+    <input type="text" name="username" id="id_username" autocomplete="username" autofocus required>
+    <label for="id_password">Contraseña</label>
+    <input type="password" name="password" id="id_password" autocomplete="current-password" required>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit">Ingresar</button>
+  </form>
+</main>
+{% endblock %}

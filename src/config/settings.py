@@ -13,6 +13,22 @@ from django.core.exceptions import ImproperlyConfigured
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def cargar_env(ruta):
+    """Lee deploy/.env al correr fuera de Docker (en Docker lo inyecta compose).
+    No pisa variables que ya estén definidas en el entorno."""
+    if not ruta.exists():
+        return
+    for linea in ruta.read_text(encoding="utf-8").splitlines():
+        linea = linea.strip()
+        if not linea or linea.startswith("#") or "=" not in linea:
+            continue
+        clave, valor = linea.split("=", 1)
+        os.environ.setdefault(clave.strip(), valor.strip().strip("\"'"))
+
+
+cargar_env(BASE_DIR.parent / "deploy" / ".env")
+
+
 def env_list(nombre, por_defecto=""):
     return [v.strip() for v in os.environ.get(nombre, por_defecto).split(",") if v.strip()]
 
@@ -35,8 +51,14 @@ INSTALLED_APPS = [
     "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
     "django.contrib.gis",
+    "simple_history",
     "core",
+    "territorio",
 ]
+
+# Usuario propio (con unidades y municipios asignados). Definido desde el inicio:
+# Django no permite cambiarlo después sin rehacer la base.
+AUTH_USER_MODEL = "core.Usuario"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -47,6 +69,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Auditoría: registra qué usuario hizo cada cambio.
+    "simple_history.middleware.HistoryRequestMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -115,7 +139,9 @@ if os.environ.get("GDAL_LIBRARY_PATH"):
 if os.environ.get("GEOS_LIBRARY_PATH"):
     GEOS_LIBRARY_PATH = os.environ["GEOS_LIBRARY_PATH"]
 
-LOGIN_URL = "admin:login"
+LOGIN_URL = "core:ingresar"
+LOGIN_REDIRECT_URL = "core:inicio"
+LOGOUT_REDIRECT_URL = "core:ingresar"
 
 # Detrás del proxy compartido (Caddy termina el HTTPS y avisa con X-Forwarded-Proto).
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

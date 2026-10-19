@@ -1,14 +1,28 @@
 {% extends "base.html" %}
 
 {% block contenido %}
-<main class="inicio">
+<main class="tarjeta ancha">
   <h1>Gestión RH</h1>
-  <p>Secretaría Departamental de Medio Ambiente y Recursos Hídricos — Gobernación de Cochabamba</p>
-  <p>Sistema en construcción.</p>
-  {% if user.is_authenticated %}
-    <p><a href="{% url 'admin:index' %}">Ir a la administración</a></p>
-  {% else %}
-    <p><a href="{% url 'admin:login' %}">Iniciar sesión</a></p>
-  {% endif %}
+  <p class="sub">SDMAyRH — Gobernación de Cochabamba · Sistema en construcción</p>
+
+  <section>
+    <h2>{{ user.get_full_name|default:user.username }}</h2>
+    <p><strong>Rol:</strong> {{ roles|join:", "|default:"sin rol asignado" }}{% if user.is_superuser %} (superusuario){% endif %}</p>
+
+    {% if ve_todo %}
+      <p><strong>Alcance:</strong> todas las unidades y municipios.</p>
+    {% else %}
+      <p><strong>Unidades:</strong> {{ unidades|join:", "|default:"ninguna" }}</p>
+      <p><strong>Municipios:</strong> {{ municipios|join:", "|default:"ninguno" }}</p>
+    {% endif %}
+  </section>
+
+  <nav class="acciones">
+    {% if user.is_staff %}<a href="{% url 'admin:index' %}">Administración</a>{% endif %}
+    <form method="post" action="{% url 'core:salir' %}">
+      {% csrf_token %}
+      <button type="submit">Salir</button>
+    </form>
+  </nav>
 </main>
 {% endblock %}
