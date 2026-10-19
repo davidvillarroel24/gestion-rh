@@ -55,7 +55,9 @@ services:
       # Anula las rutas de Windows si el .env es el de la PC (en Linux GDAL se encuentra solo).
       GDAL_LIBRARY_PATH: ""
       GEOS_LIBRARY_PATH: ""
-      DJANGO_ALLOWED_HOSTS: ${DOMINIO}
+      # 127.0.0.1: lo usa el healthcheck desde dentro del contenedor. Desde
+      # internet solo se llega por el proxy, que enruta únicamente ${DOMINIO}.
+      DJANGO_ALLOWED_HOSTS: ${DOMINIO},127.0.0.1
       DJANGO_CSRF_TRUSTED_ORIGINS: https://${DOMINIO}
     volumes:
       - media:/app/media
