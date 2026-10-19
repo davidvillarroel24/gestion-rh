@@ -1,0 +1,30 @@
+# Ajustes para desarrollo en la PC (se suma a docker-compose.yml):
+#
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
+#
+# - App en http://localhost:8000 con recarga automática (runserver) y DEBUG.
+# - El código de ../src se monta en el contenedor: los cambios se ven al guardar.
+# - Base de datos accesible desde QGIS en localhost:5433 (5433 para no chocar
+#   con un PostgreSQL instalado en la PC).
+# - La red "proxy" se crea local (en el VPS ya existe y la maneja el proxy compartido).
+
+services:
+  db:
+    ports:
+      - "127.0.0.1:5433:5432"
+
+  web:
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    environment:
+      DJANGO_DEBUG: "1"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      DJANGO_CSRF_TRUSTED_ORIGINS: http://localhost:8000
+    volumes:
+      - ../src:/app
+    ports:
+      - "127.0.0.1:8000:8000"
+
+networks:
+  proxy:
+    external: false
+    name: gestion-rh-proxy-local

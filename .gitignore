@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Django
+src/staticfiles/
+src/media/
+*.sqlite3
+
+# Variables reales (solo se versiona .env.example)
+deploy/.env
+
+# Editores / SO
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

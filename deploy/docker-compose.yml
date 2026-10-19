@@ -1,0 +1,88 @@
+# Gestión RH (SDMAyRH) en el VPS compartido.
+#
+# Igual que los demás proyectos del VPS: este stack NO abre los puertos
+# 80/443. El proxy compartido (Caddy en /srv/proxy) lee las etiquetas `caddy`
+# del servicio `web`, saca el certificado HTTPS del dominio y nos manda el
+# tráfico. La base de datos queda en la red interna, sin acceso desde afuera
+# ni desde otros proyectos.
+#
+# Uso en el VPS (desde esta carpeta):  docker compose up -d --build
+# Uso en local:  ver docker-compose.local.yml
+# Variables: deploy/.env (copiar de .env.example).
+name: gestion-rh
+
+services:
+  db:
+    image: postgis/postgis:17-3.5
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: America/La_Paz
+    # Memoria acorde al límite del contenedor (el VPS es compartido).
+    command:
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=768MB
+      - -c
+      - work_mem=16MB
+      - -c
+      - maintenance_work_mem=128MB
+    volumes:
+      - db:/var/lib/postgresql/data
+    networks: [interna]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    # Límites para no afectar a los otros proyectos del VPS.
+    mem_limit: 1g
+    cpus: 1.5
+
+  web:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DJANGO_ALLOWED_HOSTS: ${DOMINIO}
+      DJANGO_CSRF_TRUSTED_ORIGINS: https://${DOMINIO}
+    volumes:
+      - media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [interna, proxy]
+    labels:
+      # Lo lee el proxy compartido: dominio + a qué puerto mandar el tráfico.
+      caddy: ${DOMINIO}
+      caddy.reverse_proxy: "{{upstreams 8000}}"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/salud/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    mem_limit: 768m
+    cpus: 1.5
+
+  # Respaldo diario: futuro avance (ver README). Mientras tanto, respaldo
+  # manual antes de cambios delicados:
+  #   docker compose exec -T db pg_dump -U <usuario> -d <base> | gzip > respaldo.sql.gz
+
+networks:
+  interna: {}
+  # Red del proxy compartido (ya existe en el VPS).
+  proxy:
+    external: true
+
+volumes:
+  db: {}
+  media: {}

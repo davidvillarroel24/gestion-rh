@@ -1,0 +1,4 @@
+# Los scripts que corren dentro de Linux deben quedar con fin de línea LF
+# aunque se editen en Windows (un CRLF rompe el entrypoint).
+*.sh text eol=lf
+Dockerfile text eol=lf

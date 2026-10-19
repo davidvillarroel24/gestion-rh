@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block contenido %}
+<main class="inicio">
+  <h1>Gestión RH</h1>
+  <p>Secretaría Departamental de Medio Ambiente y Recursos Hídricos — Gobernación de Cochabamba</p>
+  <p>Sistema en construcción.</p>
+  {% if user.is_authenticated %}
+    <p><a href="{% url 'admin:index' %}">Ir a la administración</a></p>
+  {% else %}
+    <p><a href="{% url 'admin:login' %}">Iniciar sesión</a></p>
+  {% endif %}
+</main>
+{% endblock %}
