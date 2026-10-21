@@ -70,3 +70,11 @@ button {
 .acciones button {
   margin: 0;
 }
+
+.boton-enlace {
+  padding: 8px 16px;
+  color: #fff;
+  background: #0b6e4f;
+  border-radius: 4px;
+  text-decoration: none;
+}

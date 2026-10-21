@@ -1,0 +1,77 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visor — Gestión RH</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Ccircle cx=%228%22 cy=%228%22 r=%227%22 fill=%22%230b6e4f%22/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.17.0/dist/leaflet-geoman.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{% static 'visor/visor.css' %}">
+</head>
+<body>
+  <div id="visor">
+    <header id="cinta" aria-label="Cinta de herramientas">
+      <nav id="cinta-pestanas" role="tablist"></nav>
+      <div id="cinta-grupos"></div>
+    </header>
+
+    <aside id="panel-capas" aria-label="Capas">
+      <section class="panel-seccion">
+        <h2>Filtros</h2>
+        <div id="filtros"></div>
+      </section>
+      <section class="panel-seccion">
+        <h2>Capas</h2>
+        <div id="capas"></div>
+      </section>
+    </aside>
+
+    <main id="mapa" aria-label="Mapa"></main>
+
+    <aside id="panel-derecho" hidden aria-live="polite">
+      <header class="panel-cabecera">
+        <h2 id="panel-derecho-titulo"></h2>
+        <button type="button" class="boton-icono" id="panel-derecho-cerrar" title="Cerrar"><i class="bi bi-x-lg"></i></button>
+      </header>
+      <div id="panel-derecho-contenido"></div>
+    </aside>
+
+    <section id="tabla" hidden aria-label="Tabla de atributos">
+      <header class="panel-cabecera">
+        <h2>Tabla de atributos <span id="tabla-cantidad"></span></h2>
+        <input type="search" id="tabla-buscar" placeholder="Buscar en la tabla…">
+        <button type="button" class="boton-icono" id="tabla-cerrar" title="Cerrar tabla"><i class="bi bi-x-lg"></i></button>
+      </header>
+      <div id="tabla-cuerpo"></div>
+    </section>
+
+    <footer id="estado">
+      <span id="estado-coordenadas">—</span>
+      <span id="estado-escala"></span>
+      <span id="estado-mapa-base"></span>
+      <span id="estado-mensaje"></span>
+      <span id="estado-usuario"></span>
+    </footer>
+  </div>
+
+  <div id="avisos" aria-live="polite"></div>
+
+  {% csrf_token %}
+  <script>
+    window.VISOR = {
+      api: "{% url 'visor:api_config' %}".replace("config/", ""),
+      territorio: "{% url 'territorio:capa_geojson' 'CAPA' %}",
+      admin: "{% url 'admin:index' %}",
+      salir: "{% url 'core:salir' %}",
+      usuario: "{{ user.get_username|escapejs }}"
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.17.0/dist/leaflet-geoman.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/proj4@2.11.0/dist/proj4.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7.1.0/turf.min.js"></script>
+  <script type="module" src="{% static 'visor/js/app.js' %}"></script>
+</body>
+</html>

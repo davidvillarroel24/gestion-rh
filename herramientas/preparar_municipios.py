@@ -9,7 +9,7 @@ Docker). Requiere: pyshp, shapely, pyproj.
 
 Correcciones aplicadas (ver README de diseño §4.2):
 - Proyección Lambert propia -> EPSG:4326.
-- DBF en Windows-1252 aunque el .cpg diga UTF-8.
+- DBF en UTF-8 (lo que declara el .cpg).
 - Totora pertenece a la provincia Carrasco (el shp dice "Totora").
 - Raqaypampa es TIOC propia (el shp la nombra "Mizque" con el código de Mizque);
   queda sin código INE hasta tener el oficial.
@@ -54,7 +54,7 @@ def main(carpeta):
             origen = CRS.from_wkt(f.read())
         a_wgs84 = Transformer.from_crs(origen, "EPSG:4326", always_xy=True).transform
 
-        lector = shapefile.Reader(ruta, encoding="cp1252")
+        lector = shapefile.Reader(ruta, encoding="utf-8")
         if len(lector) != 1:
             sys.exit(f"{clave}: se esperaba 1 polígono y tiene {len(lector)}")
         registro = lector.record(0).as_dict()

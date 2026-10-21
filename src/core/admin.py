@@ -19,10 +19,13 @@ class CatalogoForm(forms.ModelForm):
         datos = super().clean()
         nombre = datos.get("nombre")
         modelo = type(self.instance)
-        exacto = nombre and modelo.objects.filter(clave=normalizar(nombre)).exclude(pk=self.instance.pk).exists()
+        ambito = {campo: datos.get(campo) for campo in modelo.campos_ambito}
+        if any(v is None for v in ambito.values()):
+            return datos  # falta la unidad: el error lo marca el propio campo
+        exacto = nombre and modelo.objects.filter(clave=normalizar(nombre), **ambito).exclude(pk=self.instance.pk).exists()
         # Un duplicado exacto lo rechaza el modelo; acá solo se avisa de los parecidos.
         if nombre and not exacto and not datos.get("confirmar_parecido") and "nombre" not in self.errors:
-            parecidos = modelo.parecidos(nombre, excluir_pk=self.instance.pk)
+            parecidos = modelo.parecidos(nombre, excluir_pk=self.instance.pk, **ambito)
             if parecidos:
                 lista = ", ".join(f"«{p.nombre}»" for p in parecidos)
                 self.add_error("nombre", f"Se parece a: {lista}. Use uno existente o marque «Crear de todos modos».")

@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     "simple_history",
     "core",
     "territorio",
+    "proyectos",
+    "visor",
 ]
 
 # Usuario propio (con unidades y municipios asignados). Definido desde el inicio:
@@ -136,12 +138,45 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # si se corre Django fuera de Docker (ej. Windows con las DLL de QGIS).
 if os.environ.get("GDAL_LIBRARY_PATH"):
     GDAL_LIBRARY_PATH = os.environ["GDAL_LIBRARY_PATH"]
+    # Usar también los datos de PROJ/GDAL de esa misma instalación. Si no, gana lo
+    # que haya dejado otro programa en las variables globales (el instalador de
+    # PostGIS para Windows deja PROJ_LIB con un proj.db más viejo -> "OGR failure").
+    _raiz = Path(GDAL_LIBRARY_PATH).resolve().parents[1]
+    for _variables, _carpeta in (
+        (("PROJ_DATA", "PROJ_LIB"), _raiz / "share" / "proj"),
+        (("GDAL_DATA",), _raiz / "apps" / "gdal" / "share" / "gdal"),
+    ):
+        if _carpeta.is_dir():
+            for _variable in _variables:
+                os.environ[_variable] = str(_carpeta)
 if os.environ.get("GEOS_LIBRARY_PATH"):
     GEOS_LIBRARY_PATH = os.environ["GEOS_LIBRARY_PATH"]
 
+# Mapas base del visor (D19: gratuitos). Para cambiar de proveedor se edita esta
+# lista; el primero es el predeterminado. Respetar la política de uso de cada uno.
+MAPAS_BASE = [
+    {"id": "osm", "nombre": "OpenStreetMap", "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+     "atribucion": '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', "max_zoom": 19},
+    {"id": "topo", "nombre": "Relieve (OpenTopoMap)", "url": "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+     "atribucion": '&copy; OpenStreetMap, SRTM | &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)',
+     "max_zoom": 17},
+    {"id": "claro", "nombre": "Claro (CARTO)", "url": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+     "atribucion": '&copy; OpenStreetMap &copy; <a href="https://carto.com/attributions">CARTO</a>', "max_zoom": 20},
+    {"id": "oscuro", "nombre": "Oscuro (CARTO)", "url": "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+     "atribucion": '&copy; OpenStreetMap &copy; <a href="https://carto.com/attributions">CARTO</a>', "max_zoom": 20},
+    {"id": "satelite", "nombre": "Satélite (Esri)",
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+     "atribucion": "Tiles &copy; Esri", "max_zoom": 19},
+]
+
 LOGIN_URL = "core:ingresar"
-LOGIN_REDIRECT_URL = "core:inicio"
+LOGIN_REDIRECT_URL = "visor:visor"
 LOGOUT_REDIRECT_URL = "core:ingresar"
+
+# OpenStreetMap bloquea los mosaicos pedidos sin cabecera Referer ("Access blocked").
+# Django usa "same-origin" por defecto, que no la envía a otros sitios; con este
+# valor (el estándar de los navegadores) se envía solo el dominio, nunca la ruta.
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 # Detrás del proxy compartido (Caddy termina el HTTPS y avisa con X-Forwarded-Proto).
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

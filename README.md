@@ -92,13 +92,17 @@ Empezar la base de cero (**borra todos los datos**):
 docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
 ```
 
+## Visor
+
+`/visor/` (es la página a la que se entra después del login): mapa tipo ArcGIS con cinta de herramientas, capas, filtros, tabla de atributos, identificar, medir, ir a coordenada y edición de geometrías (dibujar a mano o por coordenadas). Usa Leaflet, Leaflet-Geoman, proj4 y turf desde la CDN jsDelivr (versiones fijas en `templates/visor/visor.html`). Los mapas base se configuran en `MAPAS_BASE` (`config/settings.py`).
+
 ## Usuarios, roles y alcance
 
 - Login en `/ingresar/`. Los usuarios se crean en **Administración → Usuarios**.
 - **Rol = grupo**: Administrador, Técnico de unidad, Encargado municipal, Funcionario de licencias, Consulta. Sus permisos están en `src/core/roles.py` y se aplican solos después de cada `migrate`.
 - **Alcance**: al técnico se le asignan *unidades*; al encargado municipal, *municipios*. `core/alcance.py` filtra todo lo que cada uno ve.
 - Para entrar a la Administración el usuario además necesita **«Staff»** marcado.
-- Catálogos: no se precargan (solo unidades y tipos de fuente); se crean al usarlos y el sistema avisa si el nombre se parece a uno existente.
+- Catálogos: se crean al usarlos y el sistema avisa si el nombre se parece a uno existente. Valores iniciales tomados del sistema anterior (estados, programas, tipos de proyecto y de elemento, entidades con un gobierno municipal por municipio, indicadores…): `python manage.py cargar_catalogos` — **una vez por base** (PC y VPS); no duplica si se repite. Los valores están en `src/proyectos/datos_iniciales.py`.
 
 ## Pruebas
 

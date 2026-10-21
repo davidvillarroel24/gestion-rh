@@ -1,0 +1,274 @@
+/* Visor tipo ArcGIS: cinta arriba, capas a la izquierda, mapa, panel derecho,
+   tabla de atributos abajo y barra de estado. */
+
+:root {
+  --verde: #0b6e4f;
+  --verde-suave: #e3f1ea;
+  --fondo: #f5f7fa;
+  --superficie: #ffffff;
+  --borde: #d9dee5;
+  --texto: #1f2933;
+  --tenue: #616e7c;
+  --seleccion: #f5c400;
+  --peligro: #b42318;
+  --alto-cinta: 112px;
+  --alto-estado: 26px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--texto);
+  background: var(--fondo);
+}
+
+#visor {
+  display: grid;
+  grid-template-columns: 280px 1fr auto;
+  grid-template-rows: var(--alto-cinta) 1fr auto var(--alto-estado);
+  grid-template-areas:
+    "cinta cinta cinta"
+    "capas mapa derecho"
+    "capas tabla derecho"
+    "estado estado estado";
+  height: 100vh;
+}
+
+#visor.sin-capas { grid-template-columns: 0 1fr auto; }
+#visor.sin-capas #panel-capas { display: none; }
+
+/* ---------------------------------------------------------------- cinta */
+
+#cinta {
+  grid-area: cinta;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+  display: flex;
+  flex-direction: column;
+}
+
+#cinta-pestanas {
+  display: flex;
+  gap: 2px;
+  padding: 0 8px;
+  background: var(--verde);
+}
+
+#cinta-pestanas button {
+  padding: 6px 14px;
+  color: #fff;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+#cinta-pestanas button[aria-selected="true"] {
+  color: var(--verde);
+  background: var(--superficie);
+  border-radius: 4px 4px 0 0;
+  font-weight: 600;
+}
+
+#cinta-grupos {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+  padding: 4px 8px;
+  overflow-x: auto;
+}
+
+.cinta-grupo {
+  display: flex;
+  flex-direction: column;
+  padding: 0 6px;
+  border-right: 1px solid var(--borde);
+}
+
+.cinta-grupo-botones {
+  display: flex;
+  flex: 1;
+  gap: 2px;
+}
+
+.cinta-grupo-titulo {
+  font-size: 11px;
+  color: var(--tenue);
+  text-align: center;
+}
+
+.cinta-boton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 72px;
+  padding: 4px 2px;
+  color: var(--texto);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.cinta-boton i { font-size: 20px; margin-bottom: 2px; color: var(--verde); }
+.cinta-boton:hover:not(:disabled) { background: var(--verde-suave); border-color: #b9dccb; }
+.cinta-boton.activo { background: var(--verde-suave); border-color: var(--verde); }
+.cinta-boton:disabled { opacity: 0.4; cursor: default; }
+
+/* ---------------------------------------------------------------- paneles */
+
+#panel-capas {
+  grid-area: capas;
+  overflow-y: auto;
+  background: var(--superficie);
+  border-right: 1px solid var(--borde);
+}
+
+.panel-seccion { padding: 8px 10px; border-bottom: 1px solid var(--borde); }
+.panel-seccion h2, .panel-cabecera h2 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; color: var(--tenue); }
+
+#filtros label { display: block; margin-top: 6px; font-size: 12px; color: var(--tenue); }
+#filtros select, #filtros input { width: 100%; padding: 4px; border: 1px solid var(--borde); border-radius: 4px; }
+
+.capa {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+}
+
+.capa-grupo { margin: 8px 0 2px; font-weight: 600; }
+.capa-simbolo { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; }
+.capa input[type="range"] { width: 60px; }
+
+#mapa { grid-area: mapa; min-height: 0; }
+
+#panel-derecho {
+  grid-area: derecho;
+  width: 360px;
+  overflow-y: auto;
+  background: var(--superficie);
+  border-left: 1px solid var(--borde);
+}
+
+.panel-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.panel-cabecera h2 { flex: 1; margin: 0; }
+#panel-derecho-contenido { padding: 10px; }
+
+#tabla {
+  grid-area: tabla;
+  display: flex;
+  flex-direction: column;
+  height: 34vh;
+  background: var(--superficie);
+  border-top: 2px solid var(--verde);
+}
+
+#tabla[hidden] { display: none; }
+#tabla-buscar { padding: 3px 6px; border: 1px solid var(--borde); border-radius: 4px; }
+#tabla-cuerpo { flex: 1; overflow: auto; }
+
+#tabla table { width: 100%; border-collapse: collapse; font-size: 12px; }
+#tabla th, #tabla td { padding: 4px 8px; border-bottom: 1px solid #eef1f4; text-align: left; white-space: nowrap; }
+#tabla th { position: sticky; top: 0; background: #f0f3f6; cursor: pointer; user-select: none; }
+#tabla td.num { text-align: right; font-variant-numeric: tabular-nums; }
+#tabla tbody tr { cursor: pointer; }
+#tabla tbody tr:hover { background: #f6f9fb; }
+#tabla tbody tr.seleccionada { background: #fff6c7; }
+
+#estado {
+  grid-area: estado;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 12px;
+  color: #fff;
+  background: #24323f;
+}
+
+#estado-mensaje { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ffd65c; }
+#estado span { white-space: nowrap; }
+
+/* El navegador dibuja un recuadro de foco al hacer clic en una figura del mapa. */
+.leaflet-interactive:focus { outline: none; }
+
+/* ---------------------------------------------------------------- ficha y formularios */
+
+.ficha h3 { margin: 0 0 4px; font-size: 15px; }
+.ficha .codigo { color: var(--tenue); }
+.ficha dl { display: grid; grid-template-columns: 120px 1fr; gap: 3px 8px; margin: 8px 0; }
+.ficha dt { color: var(--tenue); }
+.ficha dd { margin: 0; }
+.ficha h4 { margin: 12px 0 4px; font-size: 12px; text-transform: uppercase; color: var(--tenue); }
+.ficha table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.ficha td, .ficha th { padding: 2px 4px; border-bottom: 1px solid #eef1f4; text-align: left; }
+.barra { height: 8px; background: #e6eaee; border-radius: 4px; overflow: hidden; }
+.barra > span { display: block; height: 100%; background: var(--verde); }
+
+.formulario label { display: block; margin-top: 8px; font-size: 12px; color: var(--tenue); }
+.formulario select, .formulario input, .formulario textarea {
+  width: 100%; padding: 5px; border: 1px solid var(--borde); border-radius: 4px; font: inherit;
+}
+.formulario .acciones { display: flex; gap: 8px; margin-top: 12px; }
+
+.boton {
+  padding: 6px 12px;
+  color: #fff;
+  background: var(--verde);
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.boton.secundario { color: var(--texto); background: #e6eaee; }
+.boton.peligro { background: var(--peligro); }
+.boton-icono { padding: 2px 6px; background: transparent; border: 0; cursor: pointer; font-size: 14px; }
+
+.error { color: var(--peligro); }
+.tenue { color: var(--tenue); }
+
+/* ---------------------------------------------------------------- avisos */
+
+#avisos { position: fixed; right: 16px; bottom: 40px; z-index: 2000; display: flex; flex-direction: column; gap: 6px; }
+.aviso { max-width: 360px; padding: 8px 12px; color: #fff; background: #24323f; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.aviso.error { background: var(--peligro); color: #fff; }
+.aviso.ok { background: var(--verde); }
+
+.menu-flotante {
+  position: absolute;
+  z-index: 1500;
+  min-width: 200px;
+  padding: 4px 0;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.18);
+}
+.menu-flotante button { display: flex; gap: 8px; width: 100%; padding: 6px 12px; background: none; border: 0; text-align: left; cursor: pointer; }
+.menu-flotante button:hover { background: var(--verde-suave); }
+.menu-flotante hr { margin: 4px 0; border: 0; border-top: 1px solid var(--borde); }
+
+.etiqueta-medida { padding: 2px 6px; font-weight: 600; background: #fff; border: 1px solid var(--verde); border-radius: 4px; }
+
+/* ---------------------------------------------------------------- impresión */
+
+@media print {
+  #cinta, #panel-capas, #panel-derecho, #tabla, #estado, #avisos, .leaflet-control-zoom { display: none !important; }
+  #visor { display: block; height: auto; }
+  #mapa { height: 95vh; }
+}

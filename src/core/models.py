@@ -24,6 +24,10 @@ class Catalogo(models.Model):
 
     history = HistoricalRecords(inherit=True)
 
+    # Campos que delimitan dónde no puede repetirse un nombre (vacío = en todo el catálogo).
+    # Ver CatalogoPorUnidad.
+    campos_ambito = ()
+
     class Meta:
         abstract = True
         ordering = ["nombre"]
@@ -36,20 +40,23 @@ class Catalogo(models.Model):
         self.clave = normalizar(self.nombre)
         super().save(*args, **kwargs)
 
+    def ambito(self):
+        return {f"{campo}_id": getattr(self, f"{campo}_id") for campo in self.campos_ambito}
+
     def clean(self):
         clave = normalizar(self.nombre)
         if not clave:
             raise ValidationError({"nombre": "El nombre no puede quedar vacío."})
-        repetido = type(self).objects.filter(clave=clave).exclude(pk=self.pk).first()
+        repetido = type(self).objects.filter(clave=clave, **self.ambito()).exclude(pk=self.pk).first()
         if repetido:
             raise ValidationError({"nombre": f"Ya existe «{repetido.nombre}»."})
 
     @classmethod
-    def parecidos(cls, nombre, excluir_pk=None, limite=5):
+    def parecidos(cls, nombre, excluir_pk=None, limite=5, **ambito):
         """Valores existentes que se parecen a `nombre` (para avisar antes de crear uno nuevo)."""
         clave = normalizar(nombre)
         candidatos = []
-        for obj in cls.objects.exclude(pk=excluir_pk):
+        for obj in cls.objects.filter(**ambito).exclude(pk=excluir_pk):
             puntaje = similitud(clave, obj.clave)
             if puntaje >= UMBRAL_PARECIDO:
                 candidatos.append((puntaje, obj))
@@ -63,6 +70,24 @@ class Unidad(Catalogo):
     class Meta(Catalogo.Meta):
         verbose_name = "unidad"
         verbose_name_plural = "unidades"
+
+
+class CatalogoPorUnidad(Catalogo):
+    """Catálogo propio de cada unidad: el mismo nombre puede existir en Riego y en Residuos."""
+
+    unidad = models.ForeignKey(Unidad, on_delete=models.PROTECT, related_name="+")
+    clave = models.CharField(max_length=120, editable=False)
+
+    campos_ambito = ("unidad",)
+
+    class Meta(Catalogo.Meta):
+        abstract = True
+        constraints = [
+            models.UniqueConstraint(fields=["unidad", "clave"], name="%(app_label)s_%(class)s_unico_por_unidad"),
+        ]
+
+    def __str__(self):
+        return f"{self.nombre} ({self.unidad})" if self.unidad_id else self.nombre
 
 
 class TipoFuente(Catalogo):

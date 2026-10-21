@@ -18,6 +18,7 @@
   </section>
 
   <nav class="acciones">
+    <a class="boton-enlace" href="{% url 'visor:visor' %}">Abrir el visor</a>
     {% if user.is_staff %}<a href="{% url 'admin:index' %}">Administración</a>{% endif %}
     <form method="post" action="{% url 'core:salir' %}">
       {% csrf_token %}

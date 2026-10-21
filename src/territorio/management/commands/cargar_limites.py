@@ -55,9 +55,13 @@ class Command(BaseCommand):
             geom = GEOSGeometry(json.dumps(feature["geometry"]), srid=4326)
             if geom.geom_type == "Polygon":
                 geom = MultiPolygon(geom, srid=4326)
+            # Se identifica por código INE (estable); por nombre solo si aún no tiene código.
+            # Así corregir un nombre actualiza el municipio en vez de crear otro.
+            clave = {"codigo_ine": p["codigo_ine"]} if p["codigo_ine"] else {"nombre": p["nombre"], "codigo_ine": None}
             Municipio.objects.update_or_create(
-                nombre=p["nombre"],
+                **clave,
                 defaults={
+                    "nombre": p["nombre"],
                     "codigo_ine": p["codigo_ine"],
                     "es_tioc": p["es_tioc"],
                     "provincia": provincias[p["provincia"]],
