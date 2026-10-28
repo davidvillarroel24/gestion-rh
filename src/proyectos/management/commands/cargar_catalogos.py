@@ -33,7 +33,7 @@ class Command(BaseCommand):
         fuentes = {f.clave: f for f in TipoFuente.objects.all()}
 
         for orden, nombre in enumerate(datos.ESTADOS, start=1):
-            self.crear(EstadoProyecto, nombre, orden=orden)
+            self.crear(EstadoProyecto, nombre, orden=orden, es_final=nombre in datos.ESTADOS_FINALES)
 
         for modelo, por_unidad in ((Programa, datos.PROGRAMAS), (TipoProyecto, datos.TIPOS_PROYECTO)):
             for clave_unidad, nombres in por_unidad.items():

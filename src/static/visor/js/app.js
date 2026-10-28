@@ -3,14 +3,14 @@
 
 import { emitir, estado, on, setModo } from "./estado.js";
 import { get } from "./api.js";
-import { iniciarCapas, recargarProyectos } from "./capas.js";
+import { capasDeProyectos, iniciarCapas, recargarProyectos } from "./capas.js";
 import { iniciarCinta } from "./cinta.js";
 import { irACoordenada } from "./coordenadas.js";
 import { dibujar, editar, iniciarEdicion, porCoordenadas } from "./edicion.js";
 import { enfocarFiltros, iniciarFiltros } from "./filtros.js";
-import { iniciarIdentificar } from "./identificar.js";
+import { iniciarIdentificar, mostrarFicha } from "./identificar.js";
 import {
-  agregarMarcador, borrarMarcador, crearMapa, getMapa, haySiguiente, hayAnterior, irAMarcador,
+  agregarMarcador, ajustarA, borrarMarcador, crearMapa, getMapa, haySiguiente, hayAnterior, irAMarcador,
   irExtensionTotal, marcadores, setMapaBase, vistaAnterior, vistaSiguiente,
 } from "./mapa.js";
 import { iniciarMedir, limpiarMediciones } from "./medir.js";
@@ -87,8 +87,15 @@ function cinta() {
           accion: () => window.open(`${V.admin}proyectos/proyecto/add/`, "_blank") },
       ] },
       { titulo: "Intercambio", botones: [
-        { etiqueta: "Importar", icono: "box-arrow-in-down", accion: proximamente("Fase 7") },
-        { etiqueta: "Exportar", icono: "box-arrow-up", accion: proximamente("Fase 7") },
+        { etiqueta: "Importar", icono: "box-arrow-in-down", accion: () => window.open(V.importar, "_blank") },
+        { etiqueta: "Plantillas Excel", icono: "file-earmark-spreadsheet", accion: () => window.open(`${V.importar}#plantillas`, "_blank") },
+        { etiqueta: "Exportar", icono: "box-arrow-up", accion: (b) => menu(b, [
+          { etiqueta: "Excel – proyectos filtrados", icono: "file-earmark-excel", accion: () => exportar("excel/") },
+          { etiqueta: "Excel – solo la selección", icono: "check2-square", accion: () => exportar("excel/", true) },
+          "-",
+          { etiqueta: "GeoJSON – geometrías filtradas", icono: "filetype-json", accion: () => exportar("geojson/") },
+          { etiqueta: "KML (Google Earth) – geometrías filtradas", icono: "globe-americas", accion: () => exportar("kml/") },
+        ]) },
       ] },
     ] },
     { pestana: "Análisis", grupos: [
@@ -102,8 +109,8 @@ function cinta() {
         { etiqueta: "Borrar medidas", icono: "eraser", accion: limpiarMediciones },
       ] },
       { titulo: "Resumen", botones: [
-        { etiqueta: "Tarjetas y gráficas", icono: "bar-chart", accion: proximamente("Fase 8") },
-        { etiqueta: "Alertas", icono: "exclamation-triangle", accion: proximamente("Fase 8") },
+        { etiqueta: "Tarjetas y gráficas", icono: "bar-chart", accion: () => abrirReportes() },
+        { etiqueta: "Alertas", icono: "exclamation-triangle", accion: () => abrirReportes({}, "#alertas") },
       ] },
     ] },
     { pestana: "Reportes", grupos: [
@@ -112,7 +119,8 @@ function cinta() {
       ] },
       { titulo: "Reportes", botones: [
         { etiqueta: "Ficha técnica", icono: "file-earmark-text", accion: proximamente("Fase 10") },
-        { etiqueta: "Por municipio / fuente", icono: "file-earmark-bar-graph", accion: proximamente("Fase 8") },
+        { etiqueta: "Por municipio", icono: "file-earmark-bar-graph", accion: () => abrirReportes({ por: "municipio" }) },
+        { etiqueta: "Por fuente", icono: "cash-coin", accion: () => abrirReportes({ por: "fuente" }) },
       ] },
     ] },
     { pestana: "Administración", grupos: [
@@ -126,6 +134,22 @@ function cinta() {
       ] },
     ] },
   ];
+}
+
+// Reportes con los mismos filtros del visor, en otra pestaña.
+function abrirReportes(extra = {}, ancla = "") {
+  window.open(`${V.reportes}?${new URLSearchParams({ ...estado.filtros, ...extra })}${ancla}`, "_blank");
+}
+
+// Descarga con los mismos filtros del visor (y solo la selección si se pide).
+function exportar(ruta, soloSeleccion = false) {
+  if (soloSeleccion && !estado.seleccion.size) {
+    aviso("No hay proyectos seleccionados.");
+    return;
+  }
+  const parametros = new URLSearchParams(estado.filtros);
+  if (soloSeleccion) parametros.set("ids", [...estado.seleccion].join(","));
+  window.location.href = `${V.importar}exportar/${ruta}?${parametros}`;
 }
 
 function salir() {
@@ -173,6 +197,21 @@ async function iniciar() {
   iniciarMedir();
   iniciarEdicion();
   iniciarCinta(cinta());
+  abrirProyectoDeLaUrl();
+}
+
+// /visor/?proyecto=<id> (enlaces de las alertas): abre su ficha y acerca a sus geometrías.
+function abrirProyectoDeLaUrl() {
+  const id = Number(new URLSearchParams(location.search).get("proyecto"));
+  if (!id) return;
+  mostrarFicha(id);
+  let pendiente = true; // solo la primera carga: después el usuario navega libre
+  on("proyectos-cargados", () => {
+    if (!pendiente) return;
+    pendiente = false;
+    const capas = capasDeProyectos(new Set([id]));
+    if (capas.length) ajustarA(capas);
+  });
 }
 
 iniciar();

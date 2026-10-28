@@ -5,7 +5,7 @@ Los totales se calculan con subconsultas por proyecto: así un proyecto en
 varios municipios nunca multiplica su monto al filtrar o agrupar (D10).
 """
 
-from django.db.models import DecimalField, OuterRef, Subquery, Sum, Value
+from django.db.models import DecimalField, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 
 from core import alcance
@@ -37,18 +37,18 @@ def visibles(usuario):
 
 
 def filtrar(qs, parametros):
-    """Filtros comunes del visor/reportes: unidad, estado, municipio, gestion, q (texto)."""
-    if parametros.get("unidad"):
-        qs = qs.filter(unidad_id=parametros["unidad"])
-    if parametros.get("estado"):
-        qs = qs.filter(estado_id=parametros["estado"])
-    if parametros.get("municipio"):
-        qs = qs.filter(municipios=parametros["municipio"])
-    if parametros.get("gestion"):
-        qs = qs.filter(gestion=parametros["gestion"])
-    if parametros.get("q"):
-        from django.db.models import Q
-
-        q = parametros["q"].strip()
+    """
+    Filtros comunes del visor, los reportes y la exportación:
+    unidad, estado, region, provincia, municipio, gestion (números) y q (texto).
+    Un valor no numérico en un filtro numérico se ignora (no da error).
+    """
+    campos = {"unidad": "unidad_id", "estado": "estado_id", "region": "municipios__region",
+              "provincia": "municipios__provincia", "municipio": "municipios", "gestion": "gestion"}
+    for parametro, campo in campos.items():
+        valor = str(parametros.get(parametro) or "").strip()
+        if valor.isdigit():
+            qs = qs.filter(**{campo: int(valor)})
+    q = str(parametros.get("q") or "").strip()
+    if q:
         qs = qs.filter(Q(nombre__icontains=q) | Q(codigo__icontains=q) | Q(comunidad__icontains=q) | Q(sisin__icontains=q))
     return qs.distinct()

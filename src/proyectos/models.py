@@ -37,6 +37,8 @@ CERO = Decimal("0")
 
 class EstadoProyecto(Catalogo):
     orden = models.PositiveSmallIntegerField(default=0, help_text="Orden en listas y gráficas.")
+    es_final = models.BooleanField("es final", default=False,
+                                   help_text="El proyecto ya está cerrado (ej. Concluido, De baja): no genera alertas de plazo ni de avance.")
 
     class Meta(Catalogo.Meta):
         verbose_name = "estado de proyecto"
@@ -314,6 +316,8 @@ class ProyectoMaterial(models.Model):
     material = models.ForeignKey(Material, on_delete=models.PROTECT, related_name="+")
     cantidad = models.DecimalField(max_digits=14, decimal_places=2, validators=[MinValueValidator(CERO)])
 
+    history = HistoricalRecords()
+
     class Meta:
         verbose_name = "material"
         verbose_name_plural = "materiales"
@@ -459,8 +463,8 @@ class DetalleResiduos(models.Model):
     botadero = models.CharField(max_length=200, blank=True)
     licencia = models.CharField(max_length=100, blank=True)
     riesgo = models.CharField(max_length=100, blank=True)
-    ton_urbano = models.DecimalField("toneladas urbano", max_digits=12, decimal_places=2, null=True, blank=True)
-    ton_rural = models.DecimalField("toneladas rural", max_digits=12, decimal_places=2, null=True, blank=True)
+    ton_urbano = models.DecimalField("toneladas urbano", max_digits=12, decimal_places=3, null=True, blank=True)
+    ton_rural = models.DecimalField("toneladas rural", max_digits=12, decimal_places=3, null=True, blank=True)
 
     history = HistoricalRecords()
 

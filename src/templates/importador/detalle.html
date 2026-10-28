@@ -1,0 +1,151 @@
+{% extends "pagina.html" %}
+
+{% block titulo %}Importación {{ importacion.pk }}{% endblock %}
+
+{% block head %}
+  {{ block.super }}
+  {% if importacion.tipo == "espacial" %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  {% endif %}
+{% endblock %}
+
+{% block pagina %}
+{% with r=importacion.resumen %}
+<p><a href="{% url 'importador:inicio' %}">← Importaciones</a></p>
+<h1>{{ importacion.nombre_archivo }}</h1>
+<p>
+  <span class="estado estado-{{ importacion.estado }}">{{ importacion.get_estado_display }}</span>
+  · {{ importacion.get_tipo_display }} →
+  {% if tabla %}{{ tabla.titulo }}{% else %}{{ destino_nombre }}{% endif %}
+  · {{ importacion.usuario }}, {{ importacion.creada_en|date:"d/m/Y H:i" }}
+</p>
+
+{% if importacion.tipo == "espacial" %}
+  <section class="tarjeta-seccion">
+    <h2>Contenido del archivo</h2>
+    <p>{{ r.elementos|default:0 }} elemento(s){% if formas_texto %}: {{ formas_texto }}{% endif %}
+      {% if r.sin_srs %}<br><span class="aviso-texto">El archivo no indica su sistema de coordenadas: se usó el elegido abajo.</span>{% endif %}</p>
+    <div id="mapa-previa"></div>
+  </section>
+
+  {% if importacion.estado != "aplicada" and importacion.estado != "revertida" and r.elementos %}
+  <section class="tarjeta-seccion">
+    <h2>Opciones</h2>
+    <form method="post" action="{% url 'importador:opciones' importacion.pk %}" class="formulario-opciones">
+      {% csrf_token %}
+      <label>Sistema de coordenadas (si el archivo no lo indica)
+        <select name="sistema">{% for clave, nombre in sistemas %}
+          <option value="{{ clave }}" {% if importacion.opciones.sistema == clave %}selected{% endif %}>{{ nombre }}</option>{% endfor %}
+        </select>
+      </label>
+      {% if importacion.destino == "geometrias" %}
+        <label>Proyecto
+          <select name="proyecto" id="proyecto" required>
+            <option value="">Elija…</option>
+            {% for p in proyectos %}<option value="{{ p.pk }}" {% if importacion.opciones.proyecto == p.pk|stringformat:"s" %}selected{% endif %}>{{ p.codigo }} – {{ p.nombre }}</option>{% endfor %}
+          </select>
+        </label>
+        {% for forma, nombre, elegido in formas %}
+          <label>Tipo de elemento para los {{ nombre }}
+            <select name="tipo_{{ forma }}" data-forma="{{ forma }}" data-elegido="{{ elegido }}"></select>
+          </label>
+        {% endfor %}
+        <label>Atributo con el nombre de cada elemento (opcional)
+          <select name="atributo_nombre"><option value="">— ninguno —</option>
+            {% for a in r.atributos %}<option {% if importacion.opciones.atributo_nombre == a %}selected{% endif %}>{{ a }}</option>{% endfor %}
+          </select>
+        </label>
+      {% else %}
+        <label>Atributo con el nombre o código INE del municipio
+          <select name="atributo_municipio" required>
+            {% for a in r.atributos %}<option {% if importacion.opciones.atributo_municipio == a %}selected{% endif %}>{{ a }}</option>{% endfor %}
+          </select>
+        </label>
+      {% endif %}
+      <button class="boton">Validar</button>
+    </form>
+  </section>
+  {% endif %}
+{% endif %}
+
+{% if importacion.estado != "pendiente" %}
+<section class="tarjeta-seccion">
+  <h2>Resultado {% if importacion.estado == "validada" %}de la validación (aún no se guardó nada){% endif %}</h2>
+  <ul class="conteos">
+    {% if r.filas is not None %}<li>Filas leídas: <strong>{{ r.filas }}</strong></li>{% endif %}
+    {% if r.creados %}<li>Nuevos: <strong>{{ r.creados }}</strong></li>{% endif %}
+    {% if r.actualizados %}<li>Actualizados: <strong>{{ r.actualizados }}</strong></li>{% endif %}
+    {% if r.relaciones %}<li>Municipios agregados a proyectos: <strong>{{ r.relaciones }}</strong></li>{% endif %}
+    {% if r.sin_cambios %}<li>Sin cambios (ya existían igual): <strong>{{ r.sin_cambios }}</strong></li>{% endif %}
+  </ul>
+
+  {% if r.errores %}
+    <p class="error"><strong>{{ r.errores|length }} problema(s).</strong> No se guardó nada: corrija y vuelva a cargar.
+      {% if importacion.tipo == "tabular" %}<a href="{% url 'importador:errores' importacion.pk %}">Descargar el archivo con los errores marcados</a>{% endif %}</p>
+    <table class="tabla">
+      <thead><tr><th>{% if importacion.tipo == "tabular" %}Fila{% else %}Elemento{% endif %}</th><th>Problema</th></tr></thead>
+      <tbody>{% for e in r.errores %}<tr><td>{{ e.fila|default:"—" }}</td><td>{{ e.mensajes|join:" · " }}</td></tr>{% endfor %}</tbody>
+    </table>
+  {% endif %}
+
+  {% if importacion.estado == "validada" and importacion.usuario_id == user.pk %}
+    <form method="post" action="{% url 'importador:confirmar' importacion.pk %}">
+      {% csrf_token %}<button class="boton">Confirmar e importar</button>
+    </form>
+  {% endif %}
+  {% if puede_revertir %}
+    <form method="post" action="{% url 'importador:revertir' importacion.pk %}"
+          onsubmit="return confirm('¿Revertir esta importación? Se borra lo que creó y se restaura lo que modificó.')">
+      {% csrf_token %}<button class="boton peligro">Revertir importación</button>
+    </form>
+  {% endif %}
+</section>
+{% endif %}
+{% endwith %}
+{% endblock %}
+
+{% block scripts %}
+{% if importacion.tipo == "espacial" %}
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+{% if importacion.destino == "geometrias" %}{{ tipos_elemento|json_script:"tipos-elemento" }}{{ unidad_de_proyecto|json_script:"unidad-de-proyecto" }}{% endif %}
+<script>
+  // Vista previa: lo que trae el archivo, sobre OpenStreetMap.
+  const mapa = L.map("mapa-previa");
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(mapa);
+  mapa.setView([-17.39, -66.16], 8);
+  fetch("{% url 'importador:vista_previa' importacion.pk %}").then((r) => r.json()).then((datos) => {
+    if (!datos.features) return;
+    const capa = L.geoJSON(datos, {
+      pointToLayer: (f, ll) => L.circleMarker(ll, { radius: 6, color: "#0b6e4f" }),
+      style: { color: "#0b6e4f", weight: 2 },
+      onEachFeature: (f, l) => {
+        const texto = document.createElement("div");  // textContent: los atributos vienen del archivo subido
+        texto.style.whiteSpace = "pre";
+        texto.textContent = Object.entries(f.properties).slice(0, 4).map(([k, v]) => `${k}: ${v}`).join(String.fromCharCode(10));
+        l.bindTooltip(texto);
+      },
+    }).addTo(mapa);
+    if (capa.getLayers().length) mapa.fitBounds(capa.getBounds(), { maxZoom: 16 });
+  });
+
+  {% if importacion.destino == "geometrias" %}
+  // Los tipos de elemento se filtran según la unidad del proyecto elegido y la forma.
+  const tipos = JSON.parse(document.getElementById("tipos-elemento").textContent);
+  const unidadDe = JSON.parse(document.getElementById("unidad-de-proyecto").textContent);
+  const proyecto = document.getElementById("proyecto");
+  function actualizarTipos() {
+    const unidad = unidadDe[proyecto.value];
+    document.querySelectorAll("select[data-forma]").forEach((s) => {
+      const elegido = s.value || s.dataset.elegido;
+      const opciones = tipos.filter((t) => t.unidad === unidad && t.forma === s.dataset.forma);
+      s.replaceChildren(new Option("Elija…", ""), ...opciones.map((t) =>
+        new Option(t.nombre, t.id, false, String(t.id) === elegido)));
+    });
+  }
+  proyecto?.addEventListener("change", actualizarTipos);
+  if (proyecto) actualizarTipos();
+  {% endif %}
+</script>
+{% endif %}
+{% endblock %}

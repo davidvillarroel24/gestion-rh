@@ -1,0 +1,57 @@
+.barra-superior {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 10px 20px;
+  color: #fff;
+  background: #0b6e4f;
+}
+
+.barra-superior a { color: #fff; text-decoration: none; }
+.barra-superior nav { display: flex; gap: 16px; flex: 1; }
+.barra-superior .usuario { opacity: 0.85; }
+
+.pagina { max-width: 1100px; margin: 20px auto; padding: 0 16px; }
+.pagina h1 { margin: 8px 0; color: #0b6e4f; }
+.tenue { color: #616e7c; }
+
+.columnas { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+
+.tarjeta-seccion {
+  margin: 16px 0;
+  padding: 16px 20px;
+  background: #fff;
+  border: 1px solid #e1e5ea;
+  border-radius: 8px;
+}
+
+.tarjeta-seccion h2 { margin-top: 0; font-size: 1.05rem; }
+.tarjeta-seccion form { display: flex; flex-direction: column; gap: 10px; }
+.tarjeta-seccion label { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
+.tarjeta-seccion label.casilla { flex-direction: row; align-items: center; gap: 8px; }
+.tarjeta-seccion select, .tarjeta-seccion input[type="file"] { padding: 6px; border: 1px solid #cbd2d9; border-radius: 4px; }
+.tarjeta-seccion form + form { margin-top: 10px; }
+
+.boton { align-self: flex-start; margin-top: 4px; padding: 8px 16px; color: #fff; background: #0b6e4f; border: 0; border-radius: 4px; cursor: pointer; }
+.boton.peligro { background: #b42318; }
+
+.tabla { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.tabla th, .tabla td { padding: 6px 8px; border-bottom: 1px solid #eef1f4; text-align: left; vertical-align: top; }
+.tabla th { background: #f0f3f6; }
+
+.plantillas li { margin: 4px 0; }
+.conteos { display: flex; flex-wrap: wrap; gap: 8px 24px; padding: 0; list-style: none; }
+
+.estado { padding: 2px 8px; font-size: 0.8rem; border-radius: 10px; background: #e9ecef; }
+.estado-validada { background: #cfe2ff; }
+.estado-aplicada { background: #d1e7dd; }
+.estado-con_errores { background: #f8d7da; }
+.estado-revertida { background: #fff3cd; }
+
+.mensaje { padding: 8px 12px; border-radius: 6px; background: #e9ecef; }
+.mensaje.success { background: #d1e7dd; }
+.mensaje.error { background: #f8d7da; }
+.error { color: #b42318; }
+.aviso-texto { color: #8a5a00; }
+
+#mapa-previa { height: 360px; border-radius: 6px; }

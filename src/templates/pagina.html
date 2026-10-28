@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block head %}<link rel="stylesheet" href="{% static 'css/paginas.css' %}">{% endblock %}
+
+{% block contenido %}
+<header class="barra-superior">
+  <a href="{% url 'visor:visor' %}"><strong>Gestión RH</strong></a>
+  <nav>
+    <a href="{% url 'visor:visor' %}">Visor</a>
+    <a href="{% url 'reportes:pagina' %}">Reportes</a>
+    <a href="{% url 'importador:inicio' %}">Importaciones</a>
+  </nav>
+  <span class="usuario">{{ user.get_full_name|default:user.username }}</span>
+</header>
+<main class="pagina">
+  {% for m in messages %}<p class="mensaje {{ m.tags }}">{{ m }}</p>{% endfor %}
+  {% block pagina %}{% endblock %}
+</main>
+{% endblock %}

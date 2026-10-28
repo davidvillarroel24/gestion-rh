@@ -23,6 +23,7 @@ from django.views.decorators.http import require_http_methods
 from core import alcance
 from proyectos import consultas
 from proyectos.models import EstadoProyecto, Geometria, TipoElemento
+from territorio.models import Provincia, Region
 from territorio.servicios import departamento
 
 
@@ -56,7 +57,11 @@ def config(request):
         "extension": limite.extent if limite else None,  # [oeste, sur, este, norte]
         "unidades": [{"id": x.id, "nombre": x.nombre} for x in unidades],
         "estados": [{"id": x.id, "nombre": x.nombre} for x in EstadoProyecto.objects.filter(activo=True)],
-        "municipios": [{"id": m.id, "nombre": m.nombre} for m in alcance.municipios_visibles(u).order_by("nombre")],
+        # Con su provincia y región: los filtros del visor van en cascada (Región → Provincia → Municipio).
+        "municipios": [{"id": m.id, "nombre": m.nombre, "provincia": m.provincia_id, "region": m.region_id}
+                       for m in alcance.municipios_visibles(u).order_by("nombre")],
+        "provincias": [{"id": p.id, "nombre": p.nombre} for p in Provincia.objects.order_by("nombre")],
+        "regiones": [{"id": r.id, "nombre": r.nombre} for r in Region.objects.order_by("nombre")],
         "tipos_elemento": [
             {"id": t.id, "nombre": t.nombre, "unidad": t.unidad_id, "tipo_geometria": t.tipo_geometria}
             for t in TipoElemento.objects.filter(activo=True, unidad__in=unidades)

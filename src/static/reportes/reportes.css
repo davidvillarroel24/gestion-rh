@@ -1,0 +1,36 @@
+.filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 12px;
+  align-items: end;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid #e1e5ea;
+  border-radius: 8px;
+}
+
+.filtros label { display: flex; flex-direction: column; gap: 3px; font-size: 0.85rem; color: #616e7c; }
+.filtros select, .filtros input { padding: 5px; border: 1px solid #cbd2d9; border-radius: 4px; }
+.acciones-filtros { display: flex; gap: 6px; }
+.boton.secundario { color: #1f2933; background: #e6eaee; }
+
+.tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 16px 0; }
+.dato { min-width: 0; padding: 12px 14px; background: #fff; border: 1px solid #e1e5ea; border-left: 4px solid #0b6e4f; border-radius: 8px; }
+.dato .valor { font-size: clamp(1.05rem, 1.6vw, 1.35rem); font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dato .etiqueta { font-size: 0.8rem; color: #616e7c; }
+.dato .exacto { margin-top: 2px; font-size: 0.75rem; color: #9aa5b1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+.cabecera-seccion { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.cabecera-seccion h2 { flex: 1; margin: 0; }
+.cabecera-seccion label { display: flex; flex-direction: row; gap: 6px; align-items: center; font-size: 0.9rem; }
+.cabecera-seccion select { padding: 4px; border: 1px solid #cbd2d9; border-radius: 4px; }
+.cabecera-seccion .boton { text-decoration: none; margin: 0; }
+
+.grafico { position: relative; height: 340px; margin-top: 12px; }
+.tabla-desplazable { max-height: 420px; overflow: auto; }
+.tabla td.num, .tabla th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.tabla tr.total td { font-weight: 700; border-top: 2px solid #cbd2d9; }
+
+.nivel { padding: 1px 8px; border-radius: 10px; font-size: 0.8rem; }
+.nivel-alta { background: #f8d7da; color: #842029; }
+.nivel-media { background: #fff3cd; color: #664d03; }

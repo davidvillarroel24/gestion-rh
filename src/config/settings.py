@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     "territorio",
     "proyectos",
     "visor",
+    "importador",
+    "reportes",
 ]
 
 # Usuario propio (con unidades y municipios asignados). Definido desde el inicio:

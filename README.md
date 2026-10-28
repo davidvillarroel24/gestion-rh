@@ -96,6 +96,23 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
 
 `/visor/` (es la página a la que se entra después del login): mapa tipo ArcGIS con cinta de herramientas, capas, filtros, tabla de atributos, identificar, medir, ir a coordenada y edición de geometrías (dibujar a mano o por coordenadas). Usa Leaflet, Leaflet-Geoman, proj4 y turf desde la CDN jsDelivr (versiones fijas en `templates/visor/visor.html`). Los mapas base se configuran en `MAPAS_BASE` (`config/settings.py`).
 
+## Reportes
+
+`/reportes/` (en el visor: Análisis → Tarjetas y gráficas / Alertas). Con los mismos filtros del visor, guardados en la URL: tarjetas, gráfica y tabla agrupadas por municipio, provincia, región, unidad, estado, programa, tipo, gestión, fuente o entidad, curva S, indicadores antes/después y alertas. Descarga en Excel.
+
+- **Los montos no se duplican**: un proyecto en varios municipios cuenta en cada uno, pero el total se calcula sobre proyectos distintos (la página lo indica). Por municipio se ve también el aporte municipal.
+- Umbrales de alertas: `ALERTAS = {"dias_sin_avance": 90, "brecha_financiero_fisico": 25}` en `config/settings.py` (opcional).
+- Los estados marcados **«es final»** (Concluido, De baja) no generan alertas de plazo ni de avance.
+
+## Importar y exportar
+
+`/importar/` (en el visor: Datos → Importar / Plantillas Excel / Exportar).
+
+- **Plantillas Excel** por tabla, con listas desplegables. Se escriben códigos de proyecto (`RIE-2026-0001`), nombres de municipio y de catálogo, nunca IDs. Las tablas y sus columnas están definidas en `src/importador/esquemas.py`.
+- **Importar** Excel/CSV o mapas (KML, KMZ, GeoJSON, shapefile en .zip): primero se valida (no se guarda nada y se listan los errores por fila), después se confirma. Toda importación aplicada se puede **revertir**.
+- **Exportar** a Excel (una hoja por tabla, con los filtros o la selección del visor; se puede corregir y volver a importar), GeoJSON y KML.
+- Los archivos subidos quedan en `media/importaciones/` (volumen `media` en Docker) y no son públicos.
+
 ## Usuarios, roles y alcance
 
 - Login en `/ingresar/`. Los usuarios se crean en **Administración → Usuarios**.

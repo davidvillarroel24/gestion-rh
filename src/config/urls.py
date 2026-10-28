@@ -12,6 +12,8 @@ urlpatterns = [
     path("territorio/", include("territorio.urls")),
     path("proyectos/", include("proyectos.urls")),
     path("visor/", include("visor.urls")),
+    path("importar/", include("importador.urls")),
+    path("reportes/", include("reportes.urls")),
     # Archivos subidos: siempre pasan por Django para verificar permisos (no son públicos).
     path("media/<path:ruta>", archivo_media, name="archivo_media"),
     path("", include("core.urls")),

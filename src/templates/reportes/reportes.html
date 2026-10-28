@@ -1,0 +1,68 @@
+{% extends "pagina.html" %}
+{% load static %}
+
+{% block titulo %}Reportes{% endblock %}
+
+{% block head %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'reportes/reportes.css' %}">
+{% endblock %}
+
+{% block pagina %}
+<h1>Resumen y reportes</h1>
+
+<form id="filtros" class="filtros">
+  <label>Unidad<select name="unidad"></select></label>
+  <label>Estado<select name="estado"></select></label>
+  <label>Región<select name="region"></select></label>
+  <label>Provincia<select name="provincia"></select></label>
+  <label>Municipio<select name="municipio"></select></label>
+  <label>Gestión<input name="gestion" type="number" min="1990" max="2100" placeholder="Todas"></label>
+  <label>Texto<input name="q" type="search" placeholder="Código, nombre…"></label>
+  <div class="acciones-filtros">
+    <button class="boton" type="submit">Aplicar</button>
+    <button class="boton secundario" type="reset">Limpiar</button>
+  </div>
+</form>
+
+<section id="tarjetas" class="tarjetas" aria-live="polite"></section>
+
+<section class="tarjeta-seccion">
+  <div class="cabecera-seccion">
+    <h2>Agrupado</h2>
+    <label>por <select id="por">{% for clave, nombre in dimensiones %}<option value="{{ clave }}">{{ nombre }}</option>{% endfor %}</select></label>
+    <label>mostrar <select id="medida">{% for clave, nombre in medidas %}<option value="{{ clave }}">{{ nombre }}</option>{% endfor %}</select></label>
+    <a id="descargar" class="boton" href="#">Descargar reporte Excel</a>
+  </div>
+  <div class="grafico"><canvas id="grafico-agrupado"></canvas></div>
+  <p id="nota-agrupado" class="tenue"></p>
+  <div class="tabla-desplazable"><table class="tabla" id="tabla-agrupado"></table></div>
+</section>
+
+<section class="tarjeta-seccion">
+  <h2>Curva S — avance físico y financiero en el tiempo</h2>
+  <p class="tenue">Financiero: lo desembolsado sobre lo comprometido. Físico: último avance registrado de cada proyecto, ponderado por su monto.</p>
+  <div class="grafico"><canvas id="grafico-curva"></canvas></div>
+</section>
+
+<section class="tarjeta-seccion">
+  <h2>Indicadores: antes y después</h2>
+  <p class="tenue">Suma entre proyectos del último valor registrado de cada momento.</p>
+  <div class="tabla-desplazable"><table class="tabla" id="tabla-indicadores"></table></div>
+</section>
+
+<section class="tarjeta-seccion" id="alertas">
+  <h2>Alertas <span id="cantidad-alertas"></span></h2>
+  <div class="tabla-desplazable"><table class="tabla" id="tabla-alertas"></table></div>
+</section>
+
+{{ filtros|json_script:"definicion-filtros" }}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  window.REPORTES = { datos: "{% url 'reportes:datos' %}", excel: "{% url 'reportes:excel' %}", visor: "{% url 'visor:visor' %}" };
+</script>
+<script src="{% static 'reportes/reportes.js' %}"></script>
+{% endblock %}

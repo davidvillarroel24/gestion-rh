@@ -27,17 +27,19 @@ html, body {
 
 #visor {
   display: grid;
-  grid-template-columns: 280px 1fr auto;
-  grid-template-rows: var(--alto-cinta) 1fr auto var(--alto-estado);
+  /* minmax(0, …): el mapa y la tabla se encogen al abrir la ficha en vez de empujar la página fuera de la pantalla */
+  grid-template-columns: 280px minmax(0, 1fr) auto;
+  grid-template-rows: var(--alto-cinta) minmax(0, 1fr) auto var(--alto-estado);
   grid-template-areas:
     "cinta cinta cinta"
     "capas mapa derecho"
     "capas tabla derecho"
     "estado estado estado";
   height: 100vh;
+  overflow: hidden;
 }
 
-#visor.sin-capas { grid-template-columns: 0 1fr auto; }
+#visor.sin-capas { grid-template-columns: 0 minmax(0, 1fr) auto; }
 #visor.sin-capas #panel-capas { display: none; }
 
 /* ---------------------------------------------------------------- cinta */
@@ -153,7 +155,7 @@ html, body {
 
 #panel-derecho {
   grid-area: derecho;
-  width: 360px;
+  width: min(360px, 32vw);
   overflow-y: auto;
   background: var(--superficie);
   border-left: 1px solid var(--borde);
@@ -172,6 +174,7 @@ html, body {
 
 #tabla {
   grid-area: tabla;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   height: 34vh;

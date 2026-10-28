@@ -64,6 +64,8 @@
       api: "{% url 'visor:api_config' %}".replace("config/", ""),
       territorio: "{% url 'territorio:capa_geojson' 'CAPA' %}",
       admin: "{% url 'admin:index' %}",
+      importar: "{% url 'importador:inicio' %}",
+      reportes: "{% url 'reportes:pagina' %}",
       salir: "{% url 'core:salir' %}",
       usuario: "{{ user.get_username|escapejs }}"
     };

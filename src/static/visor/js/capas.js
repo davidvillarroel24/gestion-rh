@@ -64,6 +64,7 @@ export async function recargarProyectos() {
     Object.values(proyectos).forEach((info) => {
       if (info.visible) info.grupo.addTo(mapa);
     });
+    emitir("proyectos-cargados");
   } catch (error) {
     aviso(`No se pudieron cargar los proyectos: ${error.message}`, "error");
   }

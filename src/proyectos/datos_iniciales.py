@@ -13,6 +13,7 @@ from proyectos.models import TipoElemento
 PUNTO, LINEA, POLIGONO = TipoElemento.PUNTO, TipoElemento.LINEA, TipoElemento.POLIGONO
 
 # UD_RIEGOS.ESTADO_DEL_PROYECTO (en orden de ciclo de vida)
+ESTADOS_FINALES = {"Concluido", "De baja"}  # proyecto cerrado: sin alertas de plazo ni de avance
 ESTADOS = [
     "Con convenio",                # "se cuenta con convenio"
     "En licitación",

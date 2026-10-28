@@ -1,0 +1,76 @@
+{% extends "pagina.html" %}
+
+{% block titulo %}Importar datos{% endblock %}
+
+{% block pagina %}
+<h1>Importar datos</h1>
+<p class="tenue">Primero se <strong>valida</strong> (no se guarda nada y se muestran los errores fila por fila);
+  después usted <strong>confirma</strong>. Toda importación aplicada se puede revertir.</p>
+
+<div class="columnas">
+  <section class="tarjeta-seccion">
+    <h2>Planilla (Excel o CSV)</h2>
+    <form method="post" action="{% url 'importador:subir_tabular' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <label>Tabla
+        <select name="tabla" required>
+          {% for t in tablas %}<option value="{{ t.clave }}">{{ t.titulo }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Archivo (.xlsx o .csv)<input type="file" name="archivo" accept=".xlsx,.xlsm,.csv" required></label>
+      <label class="casilla"><input type="checkbox" name="crear_catalogos" value="1">
+        Crear valores de catálogo nuevos que no existan (estados, programas, tipos de evento…)</label>
+      <button class="boton">Validar</button>
+    </form>
+  </section>
+
+  <section class="tarjeta-seccion">
+    <h2>Mapa (KML, KMZ, GeoJSON, SHP)</h2>
+    <form method="post" action="{% url 'importador:subir_espacial' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <label>Destino
+        <select name="destino" required>
+          {% for clave, nombre in destinos %}<option value="{{ clave }}">{{ nombre }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Archivo (.kml, .kmz, .geojson o shapefile en .zip)<input type="file" name="archivo" accept=".kml,.kmz,.geojson,.json,.zip" required></label>
+      <label>Sistema de coordenadas (solo si el archivo no lo indica)
+        <select name="sistema">{% for clave, nombre in sistemas %}<option value="{{ clave }}">{{ nombre }}</option>{% endfor %}</select>
+      </label>
+      <button class="boton">Continuar</button>
+    </form>
+  </section>
+</div>
+
+<section class="tarjeta-seccion" id="plantillas">
+  <h2>Plantillas</h2>
+  <p class="tenue">Cada plantilla trae la hoja «Datos» con listas desplegables, «Instrucciones» y «Listas». En lugar de IDs
+    se escriben códigos de proyecto (RIE-2026-0001), nombres de municipio y nombres de catálogo.</p>
+  <ul class="plantillas">
+    {% for t in tablas %}
+      <li><a href="{% url 'importador:plantilla' t.clave %}">{{ t.titulo }}</a> <span class="tenue">— {{ t.descripcion }}</span></li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="tarjeta-seccion">
+  <h2>Importaciones recientes</h2>
+  {% if importaciones %}
+  <table class="tabla">
+    <thead><tr><th>Fecha</th><th>Tipo</th><th>Destino</th><th>Archivo</th><th>Estado</th><th>Usuario</th></tr></thead>
+    <tbody>
+    {% for i in importaciones %}
+      <tr>
+        <td>{{ i.creada_en|date:"d/m/Y H:i" }}</td>
+        <td>{{ i.get_tipo_display }}</td>
+        <td>{{ i.destino }}</td>
+        <td><a href="{% url 'importador:detalle' i.pk %}">{{ i.nombre_archivo }}</a></td>
+        <td><span class="estado estado-{{ i.estado }}">{{ i.get_estado_display }}</span></td>
+        <td>{{ i.usuario }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="tenue">Todavía no hay importaciones.</p>{% endif %}
+</section>
+{% endblock %}
