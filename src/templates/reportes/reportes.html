@@ -13,6 +13,7 @@
 
 <form id="filtros" class="filtros">
   <label>Unidad<select name="unidad"></select></label>
+  <label>Programa<select name="programa"></select></label>
   <label>Estado<select name="estado"></select></label>
   <label>Región<select name="region"></select></label>
   <label>Provincia<select name="provincia"></select></label>
@@ -22,6 +23,7 @@
   <div class="acciones-filtros">
     <button class="boton" type="submit">Aplicar</button>
     <button class="boton secundario" type="reset">Limpiar</button>
+    <a id="ficha" class="boton secundario" href="#" target="_blank" rel="noopener">Ficha técnica</a>
   </div>
 </form>
 
@@ -62,7 +64,7 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
-  window.REPORTES = { datos: "{% url 'reportes:datos' %}", excel: "{% url 'reportes:excel' %}", visor: "{% url 'visor:visor' %}" };
+  window.REPORTES = { datos: "{% url 'reportes:datos' %}", excel: "{% url 'reportes:excel' %}", ficha: "{% url 'reportes:ficha' %}", visor: "{% url 'visor:visor' %}" };
 </script>
 <script src="{% static 'reportes/reportes.js' %}"></script>
 {% endblock %}

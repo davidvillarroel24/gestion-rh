@@ -39,15 +39,20 @@ def visibles(usuario):
 def filtrar(qs, parametros):
     """
     Filtros comunes del visor, los reportes y la exportación:
-    unidad, estado, region, provincia, municipio, gestion (números) y q (texto).
+    unidad, programa, tipo, estado, region, provincia, municipio, gestion (números), q (texto)
+    e ids (selección del visor, "1,2,3").
     Un valor no numérico en un filtro numérico se ignora (no da error).
     """
-    campos = {"unidad": "unidad_id", "estado": "estado_id", "region": "municipios__region",
-              "provincia": "municipios__provincia", "municipio": "municipios", "gestion": "gestion"}
+    campos = {"unidad": "unidad_id", "programa": "programa_id", "tipo": "tipo_id", "estado": "estado_id",
+              "region": "municipios__region", "provincia": "municipios__provincia", "municipio": "municipios",
+              "gestion": "gestion"}
     for parametro, campo in campos.items():
         valor = str(parametros.get(parametro) or "").strip()
         if valor.isdigit():
             qs = qs.filter(**{campo: int(valor)})
+    ids = [int(x) for x in str(parametros.get("ids") or "").split(",") if x.strip().isdigit()]
+    if ids:
+        qs = qs.filter(pk__in=ids)
     q = str(parametros.get("q") or "").strip()
     if q:
         qs = qs.filter(Q(nombre__icontains=q) | Q(codigo__icontains=q) | Q(comunidad__icontains=q) | Q(sisin__icontains=q))

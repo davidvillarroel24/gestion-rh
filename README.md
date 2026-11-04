@@ -104,6 +104,10 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
 - Umbrales de alertas: `ALERTAS = {"dias_sin_avance": 90, "brecha_financiero_fisico": 25}` en `config/settings.py` (opcional).
 - Los estados marcados **«es final»** (Concluido, De baja) no generan alertas de plazo ni de avance.
 
+## Ficha técnica
+
+`/reportes/ficha/` (en el visor: Reportes → Ficha técnica, o el botón «Ficha técnica» del panel de un proyecto). Usa los filtros del visor —incluido **Programa**— o la selección. Se elige **una ficha del conjunto** o **una por proyecto** (máximo 60 por página), se escriben título y objetivo (no se guardan), y se imprime / guarda como PDF desde el navegador o se descarga en Excel con el formato de `1FICHA TECNICA.xlsx`. Los montos van en letras (`reportes/letras.py`).
+
 ## Importar y exportar
 
 `/importar/` (en el visor: Datos → Importar / Plantillas Excel / Exportar).
@@ -115,10 +119,11 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
 
 ## Usuarios, roles y alcance
 
-- Login en `/ingresar/`. Los usuarios se crean en **Administración → Usuarios**.
+- Login en `/ingresar/`; después de ingresar cada uno va a su página principal según el rol (`core.alcance.pagina_inicio`: hoy el visor, que ya muestra solo su área; los funcionarios de licencias irán al módulo de licencias en la Fase 11).
+- **Usuarios** (`/usuarios/`, solo el Administrador; en el visor: Administración → Usuarios): crear, elegir rol y área (unidades) o municipios, activar/desactivar y cambiar la contraseña. No se borran: se desactivan. «Staff» se marca solo según el rol (todos menos Consulta, para poder editar en la administración).
 - **Rol = grupo**: Administrador, Técnico de unidad, Encargado municipal, Funcionario de licencias, Consulta. Sus permisos están en `src/core/roles.py` y se aplican solos después de cada `migrate`.
 - **Alcance**: al técnico se le asignan *unidades*; al encargado municipal, *municipios*. `core/alcance.py` filtra todo lo que cada uno ve.
-- Para entrar a la Administración el usuario además necesita **«Staff»** marcado.
+- La pestaña **Administración** del visor y el enlace **Usuarios** solo los ve el Administrador (o un superusuario). «Salir» está en la barra de estado, junto al nombre.
 - Catálogos: se crean al usarlos y el sistema avisa si el nombre se parece a uno existente. Valores iniciales tomados del sistema anterior (estados, programas, tipos de proyecto y de elemento, entidades con un gobierno municipal por municipio, indicadores…): `python manage.py cargar_catalogos` — **una vez por base** (PC y VPS); no duplica si se repite. Los valores están en `src/proyectos/datos_iniciales.py`.
 
 ## Pruebas

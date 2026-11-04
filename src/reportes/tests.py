@@ -5,10 +5,15 @@ from decimal import Decimal
 from openpyxl import load_workbook
 
 from core import roles
-from proyectos.models import Avance, Desembolso, EstadoProyecto, Financiamiento, Indicador, Medicion
+from django.test import TestCase
+
+from proyectos.models import (
+    Avance, Desembolso, EstadoProyecto, Financiamiento, Indicador, Material, Medicion, Programa, ProyectoMaterial,
+    TipoProyecto,
+)
 from proyectos.tests import Base
 
-from . import servicios
+from . import ficha, letras, servicios
 
 HOY = date(2026, 10, 28)
 
@@ -148,3 +153,72 @@ class VistasTests(ReportesBase):
         self.assertEqual(filas[0][-1], "Aporte municipal (Bs)")
         total = next(f for f in filas if f[0] == "TOTAL (proyectos distintos)")
         self.assertEqual(total[2], 1500)
+
+
+class LetrasTests(TestCase):
+    def test_montos_en_letras(self):
+        self.assertEqual(letras.bolivianos(Decimal("1834440")),
+                         "Un Millón Ochocientos Treinta y Cuatro Mil Cuatrocientos Cuarenta con 00/100 Bolivianos")
+        self.assertEqual(letras.bolivianos(Decimal("3668880.5")),
+                         "Tres Millones Seiscientos Sesenta y Ocho Mil Ochocientos Ochenta con 50/100 Bolivianos")
+        self.assertEqual(letras.entero_en_letras(21_101_100), "veintiún millones ciento un mil cien")
+        self.assertEqual(letras.entero_en_letras(1_000_001), "un millón uno")
+        self.assertEqual(letras.entero_en_letras(4_201_392_430), "cuatro mil doscientos un millones trescientos noventa y dos mil cuatrocientos treinta")
+        self.assertEqual(letras.bolivianos(0), "Cero con 00/100 Bolivianos")
+
+
+class FichaTests(ReportesBase):
+    def setUp(self):
+        super().setUp()
+        tanques = TipoProyecto.objects.create(nombre="Tanques", unidad=self.riego)
+        self.programa = Programa.objects.create(nombre="Seguridad Alimentaria", unidad=self.riego)
+        for p in (self.p1, self.p2):
+            p.tipo, p.programa = tanques, self.programa
+            p.save()
+        familias = Indicador.objects.create(nombre="Familias beneficiadas", unidad_medida="familias")
+        area = Indicador.objects.create(nombre="Área de riego", unidad_medida="ha")
+        Medicion.objects.create(proyecto=self.p1, indicador=familias, momento=Medicion.META, fecha=date(2026, 1, 1), valor=50)
+        Medicion.objects.create(proyecto=self.p1, indicador=familias, momento=Medicion.SEGUIMIENTO, fecha=date(2026, 2, 1), valor=40)
+        Medicion.objects.create(proyecto=self.p2, indicador=familias, momento=Medicion.META, fecha=date(2026, 1, 1), valor=30)
+        Medicion.objects.create(proyecto=self.p2, indicador=area, momento=Medicion.SEGUIMIENTO, fecha=date(2026, 1, 1), valor=Decimal("2.5"))
+        cemento = Material.objects.create(nombre="Cemento", unidad_medida="bolsas")
+        ProyectoMaterial.objects.create(proyecto=self.p1, material=cemento, cantidad=4000)
+        ProyectoMaterial.objects.create(proyecto=self.p2, material=cemento, cantidad=501)
+
+    def test_ficha_del_conjunto(self):
+        f, = ficha.armar(self.lista(), objetivo="Seguridad hídrica")
+        self.assertEqual(f["titulo"], "Seguridad Alimentaria", "un programa, dos gestiones: sin gestión en el título")
+        self.assertEqual(f["municipios"], ["Punata", "Tacachi"])
+        self.assertEqual([x["texto"] for x in f["poblacion"]], ["70 familias (meta)"], "seguimiento de P1 (40) + meta de P2 (30)")
+        self.assertEqual(f["poblacion"][0]["beneficiarios"], "70 Familias Beneficiarias")
+        accion, = f["acciones"]
+        self.assertEqual((accion["tipo"], accion["cantidad"], accion["municipios"]), ("Tanques", 2, 2))
+        self.assertEqual([x["texto"] for x in accion["materiales"]], ["4.501 bolsas"])
+        self.assertEqual([x["texto"] for x in accion["indicadores"]], ["2,50 ha"])
+        costos = {c["fuente"]: c for c in f["costos"]}
+        self.assertEqual(costos["Gobierno Autónomo Departamental de Cochabamba"]["monto_texto"], "1.300,00")
+        self.assertEqual(costos["GAM Punata"]["porcentaje"], "13,33", "un solo GAM: va su nombre")
+        self.assertEqual(f["total_letras"], "Mil Quinientos con 00/100 Bolivianos")
+
+    def test_ficha_por_proyecto(self):
+        fichas = ficha.armar(self.lista(), titulo="", modo="separado")
+        self.assertEqual([f["titulo"] for f in fichas], ["Solo Punata", "Mancomunado"], "en orden de código (gestión 2025 primero)")
+        self.assertEqual(fichas[0]["proyecto"], self.p2)
+        self.assertEqual(fichas[0]["total_texto"], "500,00")
+
+    def test_filtro_por_programa_y_seleccion(self):
+        otro = self.proyecto(nombre="Otro", municipios=[self.m1])
+        self.assertEqual(len(self.lista(programa=str(self.programa.pk))), 2)
+        self.assertEqual([p.nombre for p in self.lista(ids=f"{otro.pk},x")], ["Otro"])
+
+    def test_vistas(self):
+        self.client.force_login(self.tec)
+        r = self.client.get("/reportes/ficha/", {"programa": self.programa.pk, "titulo": "Reservorios", "modo": "separado"})
+        self.assertContains(r, "RESERVORIOS", count=2)
+        self.assertContains(r, 'name="programa" value="%d"' % self.programa.pk)
+        r = self.client.get("/reportes/ficha/excel/", {"programa": self.programa.pk})
+        hoja = load_workbook(io.BytesIO(r.content)).active
+        self.assertEqual(hoja["A1"].value, "FICHA TÉCNICA")
+        self.assertEqual(hoja["A2"].value, "SEGURIDAD ALIMENTARIA")
+        self.assertIn("Mil Quinientos con 00/100 Bolivianos", hoja[f"C{hoja.max_row}"].value)
+        self.assertContains(self.client.get("/reportes/ficha/", {"unidad": 999}), "No hay proyectos")

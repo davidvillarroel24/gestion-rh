@@ -27,6 +27,8 @@ function rellenar(select, lista, vacio) {
 
 function actualizarCascada(formulario) {
   const c = compatibles(formulario);
+  const unidad = Number(formulario.unidad.value) || null;
+  rellenar(formulario.programa, estado.config.programas.filter((p) => !unidad || p.unidad === unidad), "Todos");
   rellenar(formulario.region, c.regiones, "Todas");
   rellenar(formulario.provincia, c.provincias, "Todas");
   rellenar(formulario.municipio, c.municipios, "Todos");
@@ -37,6 +39,7 @@ export function iniciarFiltros() {
   const formulario = nodo(`
     <form class="formulario-filtros">
       <label>Unidad<select name="unidad">${opciones(c.unidades, { vacio: "Todas" })}</select></label>
+      <label>Programa<select name="programa"></select></label>
       <label>Estado<select name="estado">${opciones(c.estados, { vacio: "Todos" })}</select></label>
       <label>Región<select name="region"></select></label>
       <label>Provincia<select name="provincia"></select></label>

@@ -32,6 +32,8 @@
 
   // Región → Provincia → Municipio en cascada (igual que en el visor).
   function cascada() {
+    const unidad = Number(formulario.unidad.value) || null;
+    llenar(formulario.programa, definicion.programas.filter((p) => !unidad || p.unidad === unidad), "Todos");
     const region = Number(formulario.region.value) || null;
     const provincia = Number(formulario.provincia.value) || null;
     const enRegion = definicion.municipios.filter((m) => !region || m.region === region);
@@ -140,6 +142,9 @@
     const p = parametros();
     history.replaceState(null, "", `?${p}${location.hash}`);
     document.getElementById("descargar").href = `${R.excel}?${p}`;
+    const filtrosFicha = new URLSearchParams(p);
+    filtrosFicha.delete("por");
+    document.getElementById("ficha").href = `${R.ficha}?${filtrosFicha}`;
     const respuesta = await fetch(`${R.datos}?${p}`, { headers: { Accept: "application/json" } });
     if (respuesta.redirected) { location.reload(); return; }
     if (!respuesta.ok) {
@@ -156,7 +161,7 @@
 
   // Filtros iniciales desde la URL (el visor abre esta página con sus filtros).
   const inicial = new URLSearchParams(location.search);
-  ["region", "provincia", "municipio"].forEach((n) => { if (inicial.get(n)) formulario[n].dataset.inicial = inicial.get(n); });
+  ["programa", "region", "provincia", "municipio"].forEach((n) => { if (inicial.get(n)) formulario[n].dataset.inicial = inicial.get(n); });
   llenar(formulario.unidad, definicion.unidades, "Todas");
   llenar(formulario.estado, definicion.estados, "Todos");
   formulario.unidad.value = inicial.get("unidad") || "";

@@ -10,6 +10,7 @@
     <a href="{% url 'visor:visor' %}">Visor</a>
     <a href="{% url 'reportes:pagina' %}">Reportes</a>
     <a href="{% url 'importador:inicio' %}">Importaciones</a>
+    {% if es_administrador %}<a href="{% url 'core:usuarios' %}">Usuarios</a>{% endif %}
   </nav>
   <span class="usuario">{{ user.get_full_name|default:user.username }}</span>
 </header>

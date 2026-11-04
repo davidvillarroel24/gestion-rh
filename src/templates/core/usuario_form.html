@@ -1,0 +1,92 @@
+{% extends "pagina.html" %}
+
+{% block titulo %}{% if usuario %}Editar usuario{% else %}Nuevo usuario{% endif %}{% endblock %}
+
+{% block pagina %}
+<p><a href="{% url 'core:usuarios' %}">← Usuarios</a></p>
+<h1>{% if usuario %}{{ usuario }}{% else %}Nuevo usuario{% endif %}</h1>
+
+<form method="post" class="tarjeta-seccion form-usuario" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<p class="mensaje error">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+
+  <fieldset>
+    <legend>Datos</legend>
+    <div class="rejilla">
+      {% for campo in campos_datos %}
+        <label>{{ campo.label }}{% if campo.field.required %} *{% endif %}{{ campo }}
+          {% if campo.help_text %}<small class="tenue">{{ campo.help_text }}</small>{% endif %}
+          {% for e in campo.errors %}<small class="error">{{ e }}</small>{% endfor %}</label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Rol y acceso</legend>
+    <div class="rejilla">
+      <label>{{ form.rol.label }} *{{ form.rol }}{% for e in form.rol.errors %}<small class="error">{{ e }}</small>{% endfor %}</label>
+      <label class="casilla">{{ form.is_active }} {{ form.is_active.label }}{% for e in form.is_active.errors %}<small class="error">{{ e }}</small>{% endfor %}</label>
+    </div>
+    <ul class="tenue ayuda-roles">
+      <li><strong>Administrador</strong>: todo, incluidos los usuarios.</li>
+      <li><strong>Técnico de unidad</strong>: sus áreas (riego, residuos, forestación…), en todos los municipios.</li>
+      <li><strong>Encargado municipal</strong>: sus municipios; carga mediciones, bitácora y documentos.</li>
+      <li><strong>Funcionario de licencias</strong>: licencias ambientales (módulo en preparación).</li>
+      <li><strong>Consulta</strong>: ve todo, no modifica nada.</li>
+    </ul>
+  </fieldset>
+
+  <fieldset id="bloque-unidades">
+    <legend>{{ form.unidades.label }}</legend>
+    <small class="tenue">{{ form.unidades.help_text }}</small>
+    <div class="casillas">{{ form.unidades }}</div>
+    {% for e in form.unidades.errors %}<small class="error">{{ e }}</small>{% endfor %}
+  </fieldset>
+
+  <fieldset id="bloque-municipios">
+    <legend>{{ form.municipios.label }}</legend>
+    <small class="tenue">{{ form.municipios.help_text }}</small>
+    <div class="casillas municipios">{{ form.municipios }}</div>
+    {% for e in form.municipios.errors %}<small class="error">{{ e }}</small>{% endfor %}
+  </fieldset>
+
+  <fieldset>
+    <legend>{% if usuario %}Cambiar contraseña{% else %}Contraseña{% endif %}</legend>
+    <div class="rejilla">
+      <label>{{ form.contrasena.label }}{% if form.contrasena.field.required %} *{% endif %}{{ form.contrasena }}
+        {% if form.contrasena.help_text %}<small class="tenue">{{ form.contrasena.help_text }}</small>{% endif %}
+        {% for e in form.contrasena.errors %}<small class="error">{{ e }}</small>{% endfor %}</label>
+      <label>{{ form.contrasena2.label }}{% if form.contrasena2.field.required %} *{% endif %}{{ form.contrasena2 }}
+        {% for e in form.contrasena2.errors %}<small class="error">{{ e }}</small>{% endfor %}</label>
+    </div>
+  </fieldset>
+
+  <button class="boton" type="submit">Guardar</button>
+</form>
+
+<style>
+  .form-usuario fieldset { margin: 0 0 6px; padding: 10px 14px; border: 1px solid #e1e5ea; border-radius: 6px; }
+  .form-usuario legend { padding: 0 6px; font-weight: 600; color: #0b6e4f; }
+  .form-usuario .rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 16px; }
+  .form-usuario input:not([type=checkbox]), .form-usuario select { padding: 6px; border: 1px solid #cbd2d9; border-radius: 4px; font: inherit; }
+  .form-usuario .casillas > div { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 2px 12px; margin-top: 6px; }
+  .form-usuario .casillas label { flex-direction: row; align-items: center; gap: 6px; font-size: 0.88rem; }
+  .form-usuario .ayuda-roles { margin: 8px 0 0; padding-left: 18px; font-size: 0.85rem; }
+  .form-usuario [hidden] { display: none; }
+</style>
+{{ nombres_rol|json_script:"nombres-rol" }}
+<script>
+  // Muestra solo el alcance que usa el rol elegido (los dos si no hay rol).
+  (function () {
+    const rol = document.querySelector("[name=rol]");
+    const nombres = JSON.parse(document.getElementById("nombres-rol").textContent);
+    function actualizar() {
+      const elegido = nombres[rol.value] || "";
+      document.getElementById("bloque-unidades").hidden = elegido !== "" && elegido !== "{{ tecnico }}";
+      document.getElementById("bloque-municipios").hidden = elegido !== "" && elegido !== "{{ encargado }}";
+    }
+    rol.addEventListener("change", actualizar);
+    actualizar();
+  })();
+</script>
+{% endblock %}

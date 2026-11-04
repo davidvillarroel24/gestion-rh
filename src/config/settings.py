@@ -89,6 +89,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "core.contexto.roles",
             ],
         },
     },
@@ -172,7 +173,7 @@ MAPAS_BASE = [
 ]
 
 LOGIN_URL = "core:ingresar"
-LOGIN_REDIRECT_URL = "visor:visor"
+LOGIN_REDIRECT_URL = "core:inicio"  # redirige según el rol (core.alcance.pagina_inicio)
 LOGOUT_REDIRECT_URL = "core:ingresar"
 
 # OpenStreetMap bloquea los mosaicos pedidos sin cabecera Referer ("Access blocked").

@@ -127,6 +127,12 @@ def detalle(request, pk):
                 {"id": t.id, "nombre": t.nombre, "unidad": t.unidad_id, "forma": t.tipo_geometria}
                 for t in TipoElemento.objects.filter(activo=True, unidad__in=alcance.unidades_visibles(request.user))]
             contexto["unidad_de_proyecto"] = {p.id: p.unidad_id for p in proyectos}
+            # Primera vez: se sugiere el atributo "Name"/"nombre" (KML, GeoJSON) para no perder los nombres.
+            if "atributo_nombre" in importacion.opciones:
+                contexto["atributo_nombre"] = importacion.opciones["atributo_nombre"]
+            else:
+                contexto["atributo_nombre"] = next((a for a in importacion.resumen.get("atributos", [])
+                                                    if a.lower() in ("name", "nombre")), "")
     return render(request, "importador/detalle.html", contexto)
 
 
@@ -213,11 +219,7 @@ def plantilla(request, clave):
 
 def _proyectos_exportables(request):
     """Proyectos visibles con los mismos filtros del visor (y la selección, si viene ?ids=)."""
-    qs = consultas.filtrar(consultas.visibles(request.user), request.GET)
-    if request.GET.get("ids"):
-        ids = [int(x) for x in request.GET["ids"].split(",") if x.strip().isdigit()]
-        qs = qs.filter(pk__in=ids)
-    return qs
+    return consultas.filtrar(consultas.visibles(request.user), request.GET)
 
 
 @login_required

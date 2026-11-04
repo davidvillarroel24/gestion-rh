@@ -63,7 +63,10 @@ export async function mostrarFicha(id) {
       <h4>Documentos</h4>
       ${filas(p.documentos, [(d) => `<a href="${esc(d.url)}"><i class="bi bi-download"></i> ${esc(d.nombre)}</a>`, (d) => esc(d.tipo)])}
 
-      ${p.url_admin ? `<p style="margin-top:12px"><a class="boton" href="${esc(p.url_admin)}" target="_blank" rel="noopener">Editar proyecto</a></p>` : ""}
+      <p style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
+        <a class="boton" href="${esc(window.VISOR.reportes)}ficha/?ids=${p.id}" target="_blank" rel="noopener">Ficha técnica</a>
+        ${p.url_admin ? `<a class="boton" href="${esc(p.url_admin)}" target="_blank" rel="noopener">Editar proyecto</a>` : ""}
+      </p>
     </div>`;
   panel.abrir("Proyecto", html);
 }

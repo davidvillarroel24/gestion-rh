@@ -8,10 +8,10 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 
 from core import alcance
-from proyectos.models import EstadoProyecto
+from proyectos.models import EstadoProyecto, Programa
 from territorio.models import Provincia, Region
 
-from . import servicios
+from . import excel_ficha, ficha, servicios
 
 XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
@@ -28,6 +28,8 @@ def pagina(request):
         "filtros": {
             "unidades": [{"id": x.id, "nombre": x.nombre} for x in alcance.unidades_visibles(u).filter(activo=True)],
             "estados": [{"id": x.id, "nombre": x.nombre} for x in EstadoProyecto.objects.filter(activo=True)],
+            "programas": [{"id": x.id, "nombre": x.nombre, "unidad": x.unidad_id} for x in Programa.objects.filter(
+                activo=True, unidad__in=alcance.unidades_visibles(u)).order_by("nombre")],
             "regiones": [{"id": x.id, "nombre": x.nombre} for x in Region.objects.order_by("nombre")],
             "provincias": [{"id": x.id, "nombre": x.nombre} for x in Provincia.objects.order_by("nombre")],
             "municipios": [{"id": m.id, "nombre": m.nombre, "provincia": m.provincia_id, "region": m.region_id}
@@ -106,4 +108,48 @@ def excel(request):
     libro.save(salida)
     respuesta = HttpResponse(salida.getvalue(), content_type=XLSX)
     respuesta["Content-Disposition"] = f'attachment; filename="reporte-{agrupado["por"]}-{date.today():%Y-%m-%d}.xlsx"'
+    return respuesta
+
+
+# ---------------------------------------------------------------- ficha técnica (Fase 10)
+
+FILTROS_FICHA = ("unidad", "programa", "tipo", "estado", "region", "provincia", "municipio", "gestion", "q", "ids")
+
+
+def _fichas(request):
+    lista = servicios.proyectos(request.user, request.GET)
+    modo = "separado" if request.GET.get("modo") == "separado" else "conjunto"
+    titulo = request.GET.get("titulo", "").strip()
+    objetivo = request.GET.get("objetivo", "").strip()
+    return lista, modo, (ficha.armar(lista, titulo, objetivo, modo) if lista else [])
+
+
+@login_required
+def ficha_tecnica(request):
+    """Ficha para ver, imprimir o guardar como PDF desde el navegador."""
+    if not request.user.has_perm("proyectos.view_proyecto"):
+        return HttpResponse(status=403)
+    lista, modo, fichas = _fichas(request)
+    filtros = {k: request.GET[k] for k in FILTROS_FICHA if request.GET.get(k)}
+    return render(request, "reportes/ficha.html", {
+        "fichas": fichas, "modo": modo, "cantidad": len(lista), "filtros": filtros,
+        "titulo": request.GET.get("titulo", ""), "objetivo": request.GET.get("objetivo", ""),
+        "titulo_sugerido": ficha.titulo_sugerido(lista) if lista else "",
+        "con_mapa": request.GET.get("mapa", "1") == "1", "maximo": ficha.MAXIMO_SEPARADAS,
+        "recortadas": modo == "separado" and len(lista) > ficha.MAXIMO_SEPARADAS,
+        "geojson": [f["geojson"] for f in fichas],
+    })
+
+
+@login_required
+def ficha_excel(request):
+    """La misma ficha en Excel, con el formato de la plantilla (una hoja por ficha)."""
+    if not request.user.has_perm("proyectos.view_proyecto"):
+        return HttpResponse(status=403)
+    _, _, fichas = _fichas(request)
+    libro = excel_ficha.libro(fichas)
+    salida = io.BytesIO()
+    libro.save(salida)
+    respuesta = HttpResponse(salida.getvalue(), content_type=XLSX)
+    respuesta["Content-Disposition"] = f'attachment; filename="ficha-tecnica-{date.today():%Y-%m-%d}.xlsx"'
     return respuesta

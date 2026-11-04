@@ -26,6 +26,19 @@ def nombres_de_roles(usuario):
     return usuario._roles_cache
 
 
+def es_administrador(usuario):
+    """Gestiona usuarios y ve las opciones de administración (no basta con «staff»)."""
+    return usuario.is_authenticated and (usuario.is_superuser or roles.ADMINISTRADOR in nombres_de_roles(usuario))
+
+
+def pagina_inicio(usuario):
+    """A dónde va cada usuario al ingresar. El alcance ya limita el visor a su área;
+    los funcionarios de licencias irán al módulo de licencias cuando exista (Fase 11)."""
+    from django.urls import reverse
+
+    return reverse("visor:visor")
+
+
 def ve_todo(usuario):
     return usuario.is_authenticated and (
         usuario.is_superuser or bool(nombres_de_roles(usuario) & {roles.ADMINISTRADOR, roles.CONSULTA})

@@ -1,20 +1,15 @@
 from django.contrib.auth.decorators import login_required
 from django.db import connection
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect
 
 from . import alcance
 
 
 @login_required
 def inicio(request):
-    usuario = request.user
-    return render(request, "core/inicio.html", {
-        "roles": sorted(alcance.nombres_de_roles(usuario)),
-        "ve_todo": alcance.ve_todo(usuario),
-        "unidades": alcance.unidades_visibles(usuario),
-        "municipios": alcance.municipios_visibles(usuario),
-    })
+    """Después del login (y en «/»): la página principal según el rol."""
+    return redirect(alcance.pagina_inicio(request.user))
 
 
 def salud(request):

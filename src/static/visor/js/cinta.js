@@ -7,6 +7,7 @@ import { esc } from "./ui.js";
 
 let definicion = [];
 let actual = 0;
+const visible = (b) => !b.visible || b.visible();
 
 function dibujarPestanas() {
   const nav = document.getElementById("cinta-pestanas");
@@ -18,7 +19,7 @@ function dibujarGrupos() {
   const contenedor = document.getElementById("cinta-grupos");
   contenedor.replaceChildren();
   definicion[actual].grupos.forEach((grupo) => {
-    const botones = grupo.botones.filter((b) => !b.visible || b.visible());
+    const botones = grupo.botones.filter(visible);
     if (!botones.length) return;
     const caja = document.createElement("div");
     caja.className = "cinta-grupo";
@@ -53,7 +54,8 @@ export function refrescar() {
 }
 
 export function iniciarCinta(def) {
-  definicion = def;
+  // Una pestaña sin ningún botón visible para este usuario (ej. Administración) no se muestra.
+  definicion = def.filter((p) => p.grupos.some((g) => g.botones.some(visible)));
   document.getElementById("cinta-pestanas").addEventListener("click", (e) => {
     const boton = e.target.closest("[data-i]");
     if (!boton) return;

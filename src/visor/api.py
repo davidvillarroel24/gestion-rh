@@ -22,7 +22,7 @@ from django.views.decorators.http import require_http_methods
 
 from core import alcance
 from proyectos import consultas
-from proyectos.models import EstadoProyecto, Geometria, TipoElemento
+from proyectos.models import EstadoProyecto, Geometria, Programa, TipoElemento
 from territorio.models import Provincia, Region
 from territorio.servicios import departamento
 
@@ -57,6 +57,8 @@ def config(request):
         "extension": limite.extent if limite else None,  # [oeste, sur, este, norte]
         "unidades": [{"id": x.id, "nombre": x.nombre} for x in unidades],
         "estados": [{"id": x.id, "nombre": x.nombre} for x in EstadoProyecto.objects.filter(activo=True)],
+        "programas": [{"id": x.id, "nombre": x.nombre, "unidad": x.unidad_id}
+                      for x in Programa.objects.filter(activo=True, unidad__in=unidades).order_by("nombre")],
         # Con su provincia y región: los filtros del visor van en cascada (Región → Provincia → Municipio).
         "municipios": [{"id": m.id, "nombre": m.nombre, "provincia": m.provincia_id, "region": m.region_id}
                        for m in alcance.municipios_visibles(u).order_by("nombre")],
@@ -71,7 +73,7 @@ def config(request):
             "editar_geometria": u.has_perm("proyectos.change_geometria"),
             "borrar_geometria": u.has_perm("proyectos.delete_geometria"),
             "crear_proyecto": u.has_perm("proyectos.add_proyecto"),
-            "administracion": u.is_staff,
+            "administracion": alcance.es_administrador(u),
         },
     })
 

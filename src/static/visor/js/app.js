@@ -22,7 +22,6 @@ const V = window.VISOR;
 const modo = (m) => () => setModo(m);
 const enModo = (m) => () => estado.modo === m;
 const permiso = (p) => () => Boolean(estado.config.permisos[p]);
-const proximamente = (fase) => () => aviso(`Disponible en la ${fase}.`);
 
 function cinta() {
   return [
@@ -118,7 +117,7 @@ function cinta() {
         { etiqueta: "Imprimir mapa", icono: "printer", accion: () => window.print() },
       ] },
       { titulo: "Reportes", botones: [
-        { etiqueta: "Ficha técnica", icono: "file-earmark-text", accion: proximamente("Fase 10") },
+        { etiqueta: "Ficha técnica", icono: "file-earmark-text", accion: abrirFicha },
         { etiqueta: "Por municipio", icono: "file-earmark-bar-graph", accion: () => abrirReportes({ por: "municipio" }) },
         { etiqueta: "Por fuente", icono: "cash-coin", accion: () => abrirReportes({ por: "fuente" }) },
       ] },
@@ -127,10 +126,7 @@ function cinta() {
       { titulo: "Sistema", botones: [
         { etiqueta: "Administración", icono: "gear", visible: permiso("administracion"), accion: () => window.open(V.admin, "_blank") },
         { etiqueta: "Catálogos", icono: "list-ul", visible: permiso("administracion"), accion: () => window.open(`${V.admin}proyectos/`, "_blank") },
-        { etiqueta: "Usuarios", icono: "people", visible: permiso("administracion"), accion: () => window.open(`${V.admin}core/usuario/`, "_blank") },
-      ] },
-      { titulo: "Sesión", botones: [
-        { etiqueta: "Salir", icono: "box-arrow-right", accion: salir },
+        { etiqueta: "Usuarios", icono: "people", visible: permiso("administracion"), accion: () => window.open(V.usuarios, "_blank") },
       ] },
     ] },
   ];
@@ -139,6 +135,13 @@ function cinta() {
 // Reportes con los mismos filtros del visor, en otra pestaña.
 function abrirReportes(extra = {}, ancla = "") {
   window.open(`${V.reportes}?${new URLSearchParams({ ...estado.filtros, ...extra })}${ancla}`, "_blank");
+}
+
+// Ficha técnica de lo filtrado o, si hay selección, de los proyectos seleccionados.
+function abrirFicha() {
+  const parametros = new URLSearchParams(estado.filtros);
+  if (estado.seleccion.size) parametros.set("ids", [...estado.seleccion].join(","));
+  window.open(`${V.reportes}ficha/?${parametros}`, "_blank");
 }
 
 // Descarga con los mismos filtros del visor (y solo la selección si se pide).
@@ -185,8 +188,16 @@ async function iniciar() {
     aviso(`No se pudo iniciar el visor: ${error.message}`, "error");
     return;
   }
-  document.getElementById("estado-usuario").textContent =
-    `${estado.config.usuario.nombre}${estado.config.usuario.roles.length ? ` · ${estado.config.usuario.roles.join(", ")}` : ""}`;
+  // Usuario y rol en la barra de estado, con «Salir» (visible para todos los roles).
+  const { nombre, roles } = estado.config.usuario;
+  const usuario = document.getElementById("estado-usuario");
+  usuario.textContent = `${nombre}${roles.length ? ` · ${roles.join(", ")}` : ""} · `;
+  const botonSalir = document.createElement("button");
+  botonSalir.type = "button";
+  botonSalir.className = "enlace-salir";
+  botonSalir.innerHTML = '<i class="bi bi-box-arrow-right"></i> Salir';
+  botonSalir.addEventListener("click", salir);
+  usuario.append(botonSalir);
   crearMapa();
   iniciarModos();
   iniciarFiltros();

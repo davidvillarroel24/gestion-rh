@@ -52,7 +52,7 @@
         {% endfor %}
         <label>Atributo con el nombre de cada elemento (opcional)
           <select name="atributo_nombre"><option value="">— ninguno —</option>
-            {% for a in r.atributos %}<option {% if importacion.opciones.atributo_nombre == a %}selected{% endif %}>{{ a }}</option>{% endfor %}
+            {% for a in r.atributos %}<option {% if atributo_nombre == a %}selected{% endif %}>{{ a }}</option>{% endfor %}
           </select>
         </label>
       {% else %}

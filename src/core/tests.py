@@ -170,9 +170,66 @@ class InicioTests(BaseRolesTests):
         r = self.client.get("/")
         self.assertRedirects(r, "/ingresar/?next=/", fetch_redirect_response=False)
 
-    def test_muestra_alcance_del_encargado(self):
-        self.client.force_login(self.crear("enc", roles.ENCARGADO_MUNICIPAL, municipios=[self.tacachi]))
-        contenido = self.client.get("/").content.decode()
-        self.assertIn("Encargado municipal", contenido)
-        self.assertIn("Tacachi", contenido)
-        self.assertNotIn("Punata", contenido)
+    def test_despues_del_login_va_a_su_pagina_principal(self):
+        self.crear("enc", roles.ENCARGADO_MUNICIPAL, municipios=[self.tacachi])
+        r = self.client.post("/ingresar/", {"username": "enc", "password": "clave-de-prueba-123"})
+        self.assertRedirects(r, "/", fetch_redirect_response=False)
+        self.assertRedirects(self.client.get("/"), "/visor/", fetch_redirect_response=False)
+
+
+class UsuariosTests(BaseRolesTests):
+    def setUp(self):
+        self.admin = self.crear("jefa", roles.ADMINISTRADOR)
+        self.client.force_login(self.admin)
+        self.tecnico = Group.objects.get(name=roles.TECNICO)
+
+    def datos(self, **cambios):
+        return {"first_name": "Ana", "last_name": "Rojas", "username": "arojas", "email": "", "is_active": "on",
+                "rol": self.tecnico.pk, "unidades": [self.riego.pk], "contrasena": "Riego-2026-segura",
+                "contrasena2": "Riego-2026-segura", **cambios}
+
+    def test_solo_el_administrador(self):
+        self.client.force_login(self.crear("tec", roles.TECNICO, unidades=[self.riego]))
+        self.assertEqual(self.client.get("/usuarios/").status_code, 403)
+        self.assertEqual(self.client.post("/usuarios/nuevo/", self.datos()).status_code, 403)
+        self.assertNotContains(self.client.get("/importar/"), 'href="/usuarios/"')
+
+    def test_crear_tecnico_con_su_area(self):
+        self.assertContains(self.client.get("/importar/"), 'href="/usuarios/"', msg_prefix="enlace solo para el admin")
+        r = self.client.post("/usuarios/nuevo/", self.datos())
+        self.assertRedirects(r, "/usuarios/", fetch_redirect_response=False)
+        u = Usuario.objects.get(username="arojas")
+        self.assertEqual([g.name for g in u.groups.all()], [roles.TECNICO])
+        self.assertEqual(list(u.unidades.all()), [self.riego])
+        self.assertTrue(u.is_staff, "edita sus proyectos en la administración")
+        self.assertTrue(u.check_password("Riego-2026-segura"))
+        self.assertContains(self.client.get("/usuarios/", {"q": "rojas"}), "arojas")
+
+    def test_validaciones(self):
+        r = self.client.post("/usuarios/nuevo/", self.datos(unidades=[], contrasena2="otra"))
+        self.assertContains(r, "necesita al menos un área")
+        self.assertContains(r, "no coinciden")
+        encargado = Group.objects.get(name=roles.ENCARGADO_MUNICIPAL)
+        self.assertContains(self.client.post("/usuarios/nuevo/", self.datos(rol=encargado.pk)), "al menos un municipio")
+        self.assertFalse(Usuario.objects.filter(username="arojas").exists())
+
+    def test_editar_cambia_rol_y_no_toca_la_contrasena(self):
+        u = self.crear("ana", roles.TECNICO, unidades=[self.riego])
+        consulta = Group.objects.get(name=roles.CONSULTA)
+        r = self.client.post(f"/usuarios/{u.pk}/", self.datos(username="ana", rol=consulta.pk, unidades=[],
+                                                             contrasena="", contrasena2="", is_active=""))
+        self.assertRedirects(r, "/usuarios/", fetch_redirect_response=False)
+        u.refresh_from_db()
+        self.assertEqual([g.name for g in u.groups.all()], [roles.CONSULTA], "el rol nuevo reemplaza al anterior")
+        self.assertFalse(u.is_staff or u.is_active)
+        self.assertTrue(u.check_password("clave-de-prueba-123"))
+
+    def test_no_puede_desactivarse_ni_quitarse_el_rol(self):
+        r = self.client.post(f"/usuarios/{self.admin.pk}/", self.datos(username="jefa", rol=self.tecnico.pk, is_active="",
+                                                                      contrasena="", contrasena2=""))
+        self.assertContains(r, "No puede desactivar su propio usuario")
+        self.assertContains(r, "No puede quitarse a sí mismo")
+
+    def test_administrador_no_edita_superusuarios(self):
+        root = Usuario.objects.create_superuser("root", password="clave-de-prueba-123")
+        self.assertEqual(self.client.get(f"/usuarios/{root.pk}/").status_code, 403)

@@ -1,0 +1,87 @@
+{% extends "pagina.html" %}
+{% load static %}
+
+{% block titulo %}Ficha técnica{% endblock %}
+
+{% block head %}
+  {{ block.super }}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="{% static 'reportes/ficha.css' %}">
+{% endblock %}
+
+{% block pagina %}
+<form id="opciones-ficha" class="opciones-ficha no-imprimir" method="get">
+  <h1>Ficha técnica</h1>
+  <p class="tenue">{{ cantidad }} proyecto{{ cantidad|pluralize }} con los filtros{% if filtros.ids %} / selección{% endif %} del visor.
+    El título y el objetivo no se guardan: se escriben cada vez.</p>
+  {% for clave, valor in filtros.items %}<input type="hidden" name="{{ clave }}" value="{{ valor }}">{% endfor %}
+  <div class="campos">
+    <label>Título<input name="titulo" value="{{ titulo }}" placeholder="{% if modo == 'separado' %}Nombre de cada proyecto{% else %}{{ titulo_sugerido }}{% endif %}"></label>
+    <label>Objetivo<textarea name="objetivo" rows="3" placeholder="Contribuir a…">{{ objetivo }}</textarea></label>
+  </div>
+  <div class="campos-linea">
+    <label><input type="radio" name="modo" value="conjunto" {% if modo == "conjunto" %}checked{% endif %}> Una ficha del conjunto</label>
+    <label><input type="radio" name="modo" value="separado" {% if modo == "separado" %}checked{% endif %}> Una ficha por proyecto</label>
+    <input type="hidden" name="mapa" value="0">
+    <label><input type="checkbox" name="mapa" value="1" {% if con_mapa %}checked{% endif %}> Incluir mapa</label>
+  </div>
+  <div class="campos-linea">
+    <button class="boton" type="submit">Actualizar</button>
+    <button class="boton" type="button" id="imprimir" {% if not fichas %}disabled{% endif %}>Imprimir / Guardar PDF</button>
+    <button class="boton secundario" type="submit" formaction="{% url 'reportes:ficha_excel' %}" {% if not fichas %}disabled{% endif %}>Descargar Excel</button>
+  </div>
+  {% if recortadas %}<p class="mensaje error">Se muestran solo las primeras {{ maximo }} fichas: filtre más en el visor o use «Una ficha del conjunto».</p>{% endif %}
+  {% if not fichas %}<p class="mensaje error">No hay proyectos con esos filtros.</p>{% endif %}
+</form>
+
+{% for f in fichas %}
+<article class="ficha">
+  <table>
+    <colgroup><col class="c-a"><col class="c-b"><col class="c-c"><col class="c-d"><col class="c-e"><col class="c-f"></colgroup>
+    <tr><th colspan="6" class="titulo-ficha">FICHA TÉCNICA</th></tr>
+    <tr><td colspan="6" class="nombre-ficha">{{ f.titulo|upper }}</td></tr>
+    {% if f.proyecto %}
+    <tr><th colspan="2">PROYECTO:</th>
+      <td colspan="4" class="normal">{{ f.proyecto.codigo }}{% if f.proyecto.estado %} · {{ f.proyecto.estado }}{% endif %}{% if f.proyecto.programa %} · {{ f.proyecto.programa.nombre }}{% endif %}{% if f.proyecto.gestion %} · Gestión {{ f.proyecto.gestion }}{% endif %}{% if f.proyecto.comunidad %} · {{ f.proyecto.comunidad }}{% endif %}</td></tr>
+    {% endif %}
+    <tr><th colspan="2">UBICACIÓN POLÍTICA</th>
+      <td colspan="4" class="normal izquierda">
+        {% if con_mapa %}<div class="mapa-ficha" data-indice="{{ forloop.counter0 }}"></div>{% endif %}
+        <p><strong>Departamento de Cochabamba</strong> · Provincias: {{ f.provincias|join:", " }}</p>
+        <p>Municipios ({{ f.municipios|length }}): {{ f.municipios|join:", " }}</p>
+      </td></tr>
+    <tr><th colspan="2">POBLACIÓN :</th>
+      <td colspan="4" class="grande">{% for x in f.poblacion %}<div>{{ x.beneficiarios }}{% if x.incluye_metas %}<span class="nota">incluye metas de proyectos sin seguimiento</span>{% endif %}</div>{% empty %}—{% endfor %}</td></tr>
+    {% for a in f.acciones %}
+    <tr>
+      {% if forloop.first %}<th colspan="2" rowspan="{{ f.acciones|length }}">ACCIONES:</th>{% endif %}
+      <td colspan="3">{{ forloop.counter }}.&nbsp; {{ a.tipo }}</td>
+      <td class="izquierda detalle-accion">
+        <div>• Cantidad: {{ a.cantidad }} proyecto{{ a.cantidad|pluralize }}</div>
+        {% for x in a.materiales %}<div>• {{ x.nombre }}: {{ x.texto }}</div>{% endfor %}
+        {% for x in a.indicadores %}<div>• {{ x.nombre }}: {{ x.texto }}</div>{% endfor %}
+        <div class="municipios-accion">MUNICIPIOS BENEFICIADOS: {{ a.municipios }}</div>
+      </td>
+    </tr>
+    {% endfor %}
+    <tr><th colspan="2">OBJETIVO:</th><td colspan="4" class="normal">{{ f.objetivo|linebreaksbr }}</td></tr>
+    {% for c in f.costos %}
+    <tr><th colspan="2" rowspan="2">COSTO {{ c.fuente|upper }}:</th>
+      <td colspan="4" class="mediano">{{ c.monto_texto }} Bs ({{ c.letras }}).</td></tr>
+    <tr><td colspan="4" class="mediano">{{ c.porcentaje }} % {{ c.fuente|upper }}</td></tr>
+    {% empty %}
+    <tr><th colspan="2">COSTO DE LA INVERSIÓN:</th><td colspan="4" class="normal">Sin financiamiento registrado</td></tr>
+    {% endfor %}
+    <tr><th colspan="2" class="total">TOTAL:</th>
+      <td colspan="4" class="grande">{% if f.total %}{{ f.total_texto }} Bs ({{ f.total_letras }}){% else %}—{% endif %}</td></tr>
+  </table>
+</article>
+{% endfor %}
+
+{{ geojson|json_script:"geojson-fichas" }}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{% static 'reportes/ficha.js' %}"></script>
+{% endblock %}

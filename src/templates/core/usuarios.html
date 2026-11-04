@@ -1,0 +1,52 @@
+{% extends "pagina.html" %}
+
+{% block titulo %}Usuarios{% endblock %}
+
+{% block pagina %}
+<div class="cabecera-usuarios">
+  <h1>Usuarios</h1>
+  <a class="boton" href="{% url 'core:usuario_nuevo' %}">Nuevo usuario</a>
+</div>
+<p class="tenue">El <strong>rol</strong> define qué puede hacer; el <strong>área</strong> (o los municipios) qué proyectos ve. Los usuarios no se borran: se desactivan.</p>
+
+<form class="filtros-usuarios" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="Nombre, usuario o correo">
+  <select name="rol"><option value="">Todos los roles</option>{% for r in roles %}<option {% if r == rol %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
+  <select name="estado">
+    <option value="">Activos e inactivos</option>
+    <option value="activos" {% if estado == "activos" %}selected{% endif %}>Solo activos</option>
+    <option value="inactivos" {% if estado == "inactivos" %}selected{% endif %}>Solo inactivos</option>
+  </select>
+  <button class="boton" type="submit">Buscar</button>
+</form>
+
+<section class="tarjeta-seccion">
+  <table class="tabla">
+    <thead><tr><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Rol</th><th>Área / municipios</th><th>Estado</th><th>Último ingreso</th><th></th></tr></thead>
+    <tbody>
+    {% for u in usuarios %}
+      <tr{% if not u.is_active %} class="inactivo"{% endif %}>
+        <td>{{ u.get_full_name|default:"—" }}</td>
+        <td>{{ u.username }}</td>
+        <td>{{ u.email|default:"—" }}</td>
+        <td>{% for g in u.groups.all %}{{ g.name }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="error">Sin rol</span>{% endfor %}{% if u.is_superuser %} <span class="estado">superusuario</span>{% endif %}</td>
+        <td>{{ u.unidades.all|join:", " }}{% if u.unidades.all and u.municipios.all %} · {% endif %}{{ u.municipios.all|join:", " }}</td>
+        <td><span class="estado {% if u.is_active %}estado-aplicada{% else %}estado-con_errores{% endif %}">{{ u.is_active|yesno:"Activo,Inactivo" }}</span></td>
+        <td>{{ u.last_login|date:"d/m/Y H:i"|default:"nunca" }}</td>
+        <td>{% if not u.is_superuser or user.is_superuser %}<a href="{% url 'core:usuario' u.pk %}">Editar</a>{% endif %}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="8" class="tenue">No hay usuarios con esos filtros.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<style>
+  .cabecera-usuarios { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .filtros-usuarios { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .filtros-usuarios input, .filtros-usuarios select { padding: 6px; border: 1px solid #cbd2d9; border-radius: 4px; }
+  .filtros-usuarios .boton { margin: 0; }
+  tr.inactivo td { color: #9aa5b1; }
+</style>
+{% endblock %}
