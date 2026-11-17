@@ -2,7 +2,7 @@
 
 Sistema de gestión y seguimiento de proyectos de la Secretaría Departamental de Medio Ambiente y Recursos Hídricos (Gobernación de Cochabamba).
 
-**Stack**: Django 5.2 + GeoDjango · PostgreSQL 17 + PostGIS 3.5 · Docker · dominio **https://gestion-rh.duckdns.org**
+**Stack**: Django 5.2 + GeoDjango · PostgreSQL 17 + PostGIS 3.5 · Docker · dominio **https://gestion-rh.modaldevj.com**
 
 > El diseño completo (modelo de datos, decisiones, plan por fases) vive en el documento de diseño del proyecto (`README.md` de la carpeta superior, fuera de este repositorio).
 
@@ -141,7 +141,7 @@ El VPS lo comparten varios proyectos. **Solo el proxy compartido** (Caddy en `/s
 
 Pasos probados en este VPS (mismo flujo que funcionó con los otros proyectos), como `root` por PuTTY. **Pegar cada comando en una sola línea**: PuTTY puede romper los `\` de continuación.
 
-1. **DuckDNS**: apuntar `gestion-rh` a la IP del VPS. Comprobar: `nslookup gestion-rh.duckdns.org` debe devolver esa IP.
+1. **DNS (Cloudflare, dominio `modaldevj.com`)**: registro `A` `gestion-rh` → IP del VPS, con el proxy en **«DNS only»** (nube gris) para que el proxy compartido saque el certificado de Let's Encrypt directo. Comprobar: `nslookup gestion-rh.modaldevj.com` debe devolver la IP del VPS. (Antes se usó `gestion-rh.duckdns.org`; la red de la Gobernación bloquea todo `*.duckdns.org`.)
 2. **Deploy key** (solo lectura, una por proyecto):
 
    ```bash
@@ -167,7 +167,7 @@ Pasos probados en este VPS (mismo flujo que funcionó con los otros proyectos), 
    nano .env
    ```
 
-   `DOMINIO=gestion-rh.duckdns.org`, `DJANGO_DEBUG=0`. **No** copiar las líneas de Windows (`DB_HOST`, `GDAL_LIBRARY_PATH`…) del `.env` de la PC.
+   `DOMINIO=gestion-rh.modaldevj.com`, `DJANGO_DEBUG=0`. **No** copiar las líneas de Windows (`DB_HOST`, `GDAL_LIBRARY_PATH`…) del `.env` de la PC.
 5. **Levantar** (la primera vez tarda unos minutos: instala GDAL; migra y carga los 48 municipios sola):
 
    ```bash
@@ -183,7 +183,7 @@ Pasos probados en este VPS (mismo flujo que funcionó con los otros proyectos), 
    docker compose exec web python manage.py createsuperuser
    ```
 
-7. **Verificar**: `curl https://gestion-rh.duckdns.org/salud/` → `{"estado": "ok", ...}`; y `docker ps --format "table {{.Names}}\t{{.Ports}}"` no debe mostrar **ninguna** fila nueva con `0.0.0.0:` (solo `proxy-caddy-1` la tiene).
+7. **Verificar**: `curl https://gestion-rh.modaldevj.com/salud/` → `{"estado": "ok", ...}`; y `docker ps --format "table {{.Names}}\t{{.Ports}}"` no debe mostrar **ninguna** fila nueva con `0.0.0.0:` (solo `proxy-caddy-1` la tiene).
 
 ### Actualizar (redeploy)
 
