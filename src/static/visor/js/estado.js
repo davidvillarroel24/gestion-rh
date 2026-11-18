@@ -10,12 +10,14 @@ export const estado = {
   modo: null,          // null | "identificar" | "medir-distancia" | "medir-area" | "seleccion-rectangulo" | "dibujar" | "editar"
 };
 
+// Devuelve una función que quita al oyente (para escuchar una sola vez).
 export function on(evento, fn) {
   (oyentes[evento] ??= []).push(fn);
+  return () => { oyentes[evento] = oyentes[evento].filter((f) => f !== fn); };
 }
 
 export function emitir(evento, datos) {
-  (oyentes[evento] || []).forEach((fn) => fn(datos));
+  [...(oyentes[evento] || [])].forEach((fn) => fn(datos));
 }
 
 // Cambia la herramienta activa. Volver a pulsar la misma la apaga.

@@ -472,6 +472,9 @@ class DetalleResiduos(models.Model):
         verbose_name = "detalle de residuos sólidos"
         verbose_name_plural = "detalle de residuos sólidos"
 
+    def __str__(self):
+        return "Detalle de residuos sólidos"
+
     @property
     def ton_total(self):
         return (self.ton_urbano or CERO) + (self.ton_rural or CERO)
@@ -489,3 +492,6 @@ class DetalleForestacion(models.Model):
     class Meta:
         verbose_name = "detalle de forestación"
         verbose_name_plural = "detalle de forestación"
+
+    def __str__(self):
+        return "Detalle de forestación"

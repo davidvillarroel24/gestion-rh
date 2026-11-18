@@ -6,4 +6,6 @@
 venv
 deploy/.env
 deploy/respaldos
+respaldos
+*.dump
 *.md

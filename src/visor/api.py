@@ -17,7 +17,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import GEOSException, GEOSGeometry, Polygon
 from django.core.exceptions import ValidationError
 from django.http import Http404, JsonResponse
-from django.urls import NoReverseMatch, reverse
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 from core import alcance
@@ -210,13 +210,6 @@ def proyectos(request):
     return JsonResponse({"filas": filas})
 
 
-def _url_admin(nombre, *args):
-    try:
-        return reverse(nombre, args=args)
-    except NoReverseMatch:
-        return None
-
-
 @login_required
 def proyecto(request, pk):
     """Ficha que muestra "Identificar"."""
@@ -242,6 +235,7 @@ def proyecto(request, pk):
                        for m in p.mediciones.select_related("indicador", "desagregacion")],
         "documentos": [{"nombre": str(d), "tipo": str(d.tipo or ""), "url": reverse("proyectos:descargar_documento", args=[d.pk])}
                        for d in p.documentos.select_related("tipo")] if u.has_perm("proyectos.view_documento") else [],
-        "url_admin": _url_admin("admin:proyectos_proyecto_change", p.pk) if u.is_staff else None,
+        # Edita quien puede cambiar el proyecto o cargar algo de lo que cuelga de él (encargado municipal: mediciones, bitácora…).
+        "puede_editar": any(u.has_perm(f"proyectos.{x}") for x in ("change_proyecto", "add_medicion", "add_evento", "add_documento")),
     }
     return JsonResponse(datos)

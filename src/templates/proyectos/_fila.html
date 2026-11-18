@@ -1,0 +1,14 @@
+{# Una fila de una tabla editable (formset). Se usa también para la fila vacía de «Agregar fila». #}
+<tr class="fila{% if f.errors %} con-error{% endif %}">
+  {% for campo in f.visible_fields %}{% if campo.name != "DELETE" %}
+  <td>{{ campo }}{% for e in campo.errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+  {% endif %}{% endfor %}
+  {% if extra_financiamiento %}<td class="num">{% if f.instance.pk %}{{ f.instance.desembolsado|floatformat:2 }}{% endif %}</td>{% endif %}
+  {% if es_documento %}<td>{% if f.instance.pk and f.instance.archivo %}<a href="{% url 'proyectos:descargar_documento' f.instance.pk %}">Descargar</a>{% endif %}</td>{% endif %}
+  {% if es_geometria %}<td>{% if f.instance.pk %}<a href="{% url 'visor:visor' %}?geometria={{ f.instance.pk }}" data-geometria="{{ f.instance.pk }}">Editar en el mapa</a>{% endif %}</td>{% endif %}
+  <td class="acciones-fila">
+    {% for campo in f.hidden_fields %}{{ campo }}{% endfor %}
+    {% if f.DELETE %}<label class="borrar" title="Marcar para borrar al guardar">{{ f.DELETE }} Borrar</label>{% endif %}
+    {% for e in f.non_field_errors %}<small class="error">{{ e }}</small>{% endfor %}
+  </td>
+</tr>

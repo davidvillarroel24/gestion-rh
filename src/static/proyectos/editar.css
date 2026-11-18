@@ -1,0 +1,41 @@
+/* Página de edición del proyecto (sola o dentro del visor). */
+
+.pagina.incrustada { max-width: none; margin: 0; padding: 12px 18px 30px; }
+.cabecera-proyecto h1 { margin: 2px 0 10px; font-size: 1.35rem; }
+
+.pestanas-proyecto { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 2px solid #0b6e4f; }
+.pestanas-proyecto a { padding: 7px 12px; color: #1f2933; text-decoration: none; background: #e9edf1; border-radius: 6px 6px 0 0; font-size: 0.9rem; }
+.pestanas-proyecto a:hover { background: #d9e2e8; }
+.pestanas-proyecto a[aria-current="page"] { color: #fff; background: #0b6e4f; }
+.pestanas-proyecto + .tarjeta-seccion { margin-top: 0; border-top-left-radius: 0; }
+
+.form-proyecto fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.form-proyecto .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px 16px; }
+.form-proyecto .rejilla label { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
+.form-proyecto .ancho-doble { grid-column: span 2; }
+.form-proyecto .ancho-completo { grid-column: 1 / -1; }
+.form-proyecto input:not([type=checkbox]):not([type=file]), .form-proyecto select, .form-proyecto textarea {
+  padding: 5px 6px; border: 1px solid #cbd2d9; border-radius: 4px; font: inherit; max-width: 100%;
+}
+.form-proyecto #id_municipios { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 2px 12px;
+  max-height: 220px; overflow: auto; padding: 6px; border: 1px solid #e1e5ea; border-radius: 4px; }
+.form-proyecto #id_municipios label { flex-direction: row; align-items: center; gap: 6px; font-size: 0.85rem; }
+.form-proyecto .buscar-municipio { max-width: 260px; }
+@media (max-width: 600px) { .form-proyecto .ancho-doble { grid-column: auto; } }
+
+.resumen { display: grid; grid-template-columns: max-content 1fr; gap: 3px 16px; margin: 6px 0; }
+.resumen dt { color: #616e7c; }
+.resumen dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+.tabla-desplazable { overflow-x: auto; }
+.tabla-editable td { vertical-align: top; }
+.tabla-editable input:not([type=checkbox]), .tabla-editable select, .tabla-editable textarea { width: 100%; min-width: 90px; }
+.tabla-editable tr.con-error { background: #fdecee; }
+.tabla-editable .acciones-fila { white-space: nowrap; }
+.tabla-editable .borrar { display: inline-flex; gap: 4px; align-items: center; font-size: 0.82rem; color: #b42318; }
+.tabla-editable small.error { display: block; }
+.tabla td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.tabla td.cambios { font-size: 0.82rem; color: #52606d; max-width: 520px; }
+.acciones-guardar { position: sticky; bottom: 0; padding: 10px 0 0; background: linear-gradient(transparent, #fff 30%); }
+.form-proyecto h2 { margin: 18px 0 6px; font-size: 1.05rem; }
+.form-proyecto h2:first-child { margin-top: 0; }

@@ -126,4 +126,5 @@ class VisorApiTests(Base):
         self.assertEqual(self.client.get(f"/visor/api/proyectos/{self.ajeno.id}/").status_code, 404)
         self.client.force_login(Usuario.objects.create_superuser("root", password="clave-de-prueba-123"))
         ficha = self.client.get(f"/visor/api/proyectos/{self.propio.id}/").json()
-        self.assertIn(f"/admin/proyectos/proyecto/{self.propio.id}/change/", ficha["url_admin"])
+        self.assertTrue(ficha["puede_editar"], "el botón abre la edición dentro del visor, no /admin")
+        self.assertNotIn("url_admin", ficha)

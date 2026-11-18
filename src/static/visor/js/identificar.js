@@ -2,6 +2,7 @@
 
 import { estado, on, seleccionar } from "./estado.js";
 import { get } from "./api.js";
+import { abrirEditor } from "./editor-proyecto.js";
 import { aviso, bs, esc, mensaje, panel, pct } from "./ui.js";
 
 const fecha = (f) => (f ? new Date(`${f}T00:00:00`).toLocaleDateString("es-BO") : "—");
@@ -65,10 +66,11 @@ export async function mostrarFicha(id) {
 
       <p style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
         <a class="boton" href="${esc(window.VISOR.reportes)}ficha/?ids=${p.id}" target="_blank" rel="noopener">Ficha técnica</a>
-        ${p.url_admin ? `<a class="boton" href="${esc(p.url_admin)}" target="_blank" rel="noopener">Editar proyecto</a>` : ""}
+        ${p.puede_editar ? '<button type="button" class="boton" data-editar-proyecto>Editar proyecto</button>' : ""}
       </p>
     </div>`;
-  panel.abrir("Proyecto", html);
+  panel.abrir("Proyecto", html).querySelector("[data-editar-proyecto]")
+    ?.addEventListener("click", () => abrirEditor({ proyectoId: p.id, titulo: `${p.codigo} – ${p.nombre}` }));
 }
 
 function fichaLimite(capa, p) {

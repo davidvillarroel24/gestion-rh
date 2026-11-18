@@ -3,10 +3,11 @@
 
 import { emitir, estado, on, setModo } from "./estado.js";
 import { get } from "./api.js";
-import { capasDeProyectos, iniciarCapas, recargarProyectos } from "./capas.js";
+import { capaDeGeometria, capasDeProyectos, iniciarCapas, recargarProyectos } from "./capas.js";
 import { iniciarCinta } from "./cinta.js";
 import { irACoordenada } from "./coordenadas.js";
-import { dibujar, editar, iniciarEdicion, porCoordenadas } from "./edicion.js";
+import { dibujar, editar, editarGeometria, iniciarEdicion, porCoordenadas } from "./edicion.js";
+import { abrirEditor, iniciarEditorProyecto } from "./editor-proyecto.js";
 import { enfocarFiltros, iniciarFiltros } from "./filtros.js";
 import { iniciarIdentificar, mostrarFicha } from "./identificar.js";
 import {
@@ -83,7 +84,7 @@ function cinta() {
       { titulo: "Proyectos", botones: [
         { etiqueta: "Tabla de atributos", icono: "table", activo: estaVisible, accion: () => mostrarTabla() },
         { etiqueta: "Nuevo proyecto", icono: "plus-square", habilitado: permiso("crear_proyecto"),
-          accion: () => window.open(`${V.admin}proyectos/proyecto/add/`, "_blank") },
+          accion: () => abrirEditor({ titulo: "Nuevo proyecto" }) },
       ] },
       { titulo: "Intercambio", botones: [
         { etiqueta: "Importar", icono: "box-arrow-in-down", accion: () => window.open(V.importar, "_blank") },
@@ -207,8 +208,10 @@ async function iniciar() {
   iniciarIdentificar();
   iniciarMedir();
   iniciarEdicion();
+  iniciarEditorProyecto();
   iniciarCinta(cinta());
   abrirProyectoDeLaUrl();
+  editarGeometriaDeLaUrl();
 }
 
 // /visor/?proyecto=<id> (enlaces de las alertas): abre su ficha y acerca a sus geometrías.
@@ -222,6 +225,22 @@ function abrirProyectoDeLaUrl() {
     pendiente = false;
     const capas = capasDeProyectos(new Set([id]));
     if (capas.length) ajustarA(capas);
+  });
+}
+
+// /visor/?geometria=<id> («Editar en el mapa» desde la página del proyecto abierta sola).
+function editarGeometriaDeLaUrl() {
+  const id = Number(new URLSearchParams(location.search).get("geometria"));
+  if (!id) return;
+  const quitar = on("proyectos-cargados", () => {
+    quitar();
+    const capa = capaDeGeometria(id);
+    if (!capa) {
+      aviso("Esa geometría no está visible con los filtros actuales.", "error");
+      return;
+    }
+    ajustarA([capa]);
+    editarGeometria(id);
   });
 }
 

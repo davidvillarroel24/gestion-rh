@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load static %}
+
+{# Para mostrar una página dentro del visor (en lugar del mapa): sin la barra superior. #}
+{% block head %}<link rel="stylesheet" href="{% static 'css/paginas.css' %}">{% block head_pagina %}{% endblock %}{% endblock %}
+
+{% block contenido %}
+<main class="pagina incrustada">
+  {% for m in messages %}<p class="mensaje {{ m.tags }}">{{ m }}</p>{% endfor %}
+  {% block pagina %}{% endblock %}
+</main>
+{% endblock %}

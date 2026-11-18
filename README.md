@@ -96,6 +96,8 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
 
 `/visor/` (es la página a la que se entra después del login): mapa tipo ArcGIS con cinta de herramientas, capas, filtros, tabla de atributos, identificar, medir, ir a coordenada y edición de geometrías (dibujar a mano o por coordenadas). Usa Leaflet, Leaflet-Geoman, proj4 y turf desde la CDN jsDelivr (versiones fijas en `templates/visor/visor.html`). Los mapas base se configuran en `MAPAS_BASE` (`config/settings.py`).
 
+**Editar / nuevo proyecto sin pasar por /admin**: el botón «Editar proyecto» del panel del proyecto (clic en el mapa o doble clic en la tabla) y «Datos → Nuevo proyecto» ocultan el mapa y muestran, en el mismo lugar, la página `/proyectos/<id>/editar/` (también se abre sola en otra pestaña). Pestañas: datos generales, financiamiento y desembolsos, avance físico, materiales, mediciones, bitácora, documentos, geometrías («Editar en el mapa» vuelve al mapa con esa geometría en edición), detalle de la unidad e historial de cambios. Cada pestaña se guarda por separado y respeta los permisos del rol. «Volver al mapa» conserva filtros y selección y recarga los datos. Código: `proyectos/edicion.py`, `templates/proyectos/editar.html`, `static/visor/js/editor-proyecto.js`. Estas dos páginas permiten mostrarse dentro del visor (`X-Frame-Options: SAMEORIGIN`); el resto del sistema sigue con `DENY`.
+
 ## Reportes
 
 `/reportes/` (en el visor: Análisis → Tarjetas y gráficas / Alertas). Con los mismos filtros del visor, guardados en la URL: tarjetas, gráfica y tabla agrupadas por municipio, provincia, región, unidad, estado, programa, tipo, gestión, fuente o entidad, curva S, indicadores antes/después y alertas. Descarga en Excel.

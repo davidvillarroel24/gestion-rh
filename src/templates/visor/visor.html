@@ -38,6 +38,15 @@
       <div id="panel-derecho-contenido"></div>
     </aside>
 
+    <section id="editor-proyecto" hidden aria-label="Edición del proyecto">
+      <header class="panel-cabecera">
+        <button type="button" class="boton" id="editor-proyecto-volver"><i class="bi bi-arrow-left"></i> Volver al mapa</button>
+        <h2 id="editor-proyecto-titulo"></h2>
+        <a id="editor-proyecto-pestana" href="#" target="_blank" rel="noopener" title="Abrir en una pestaña nueva"><i class="bi bi-box-arrow-up-right"></i></a>
+      </header>
+      <iframe id="editor-proyecto-marco" title="Edición del proyecto"></iframe>
+    </section>
+
     <section id="tabla" hidden aria-label="Tabla de atributos">
       <header class="panel-cabecera">
         <h2>Tabla de atributos <span id="tabla-cantidad"></span></h2>
@@ -67,6 +76,7 @@
       importar: "{% url 'importador:inicio' %}",
       reportes: "{% url 'reportes:pagina' %}",
       usuarios: "{% url 'core:usuarios' %}",
+      proyectos: "{% url 'proyectos:nuevo' %}".replace("nuevo/", ""),
       salir: "{% url 'core:salir' %}",
       usuario: "{{ user.get_username|escapejs }}"
     };

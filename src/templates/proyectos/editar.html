@@ -1,0 +1,129 @@
+{% extends base %}
+{% load static %}
+
+{% block titulo %}{% if proyecto %}{{ proyecto.codigo }}{% else %}Nuevo proyecto{% endif %}{% endblock %}
+
+{% block head %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'proyectos/editar.css' %}">
+{% endblock %}
+
+{% block pagina %}
+<header class="cabecera-proyecto">
+  {% if proyecto %}
+    <div class="tenue">{{ proyecto.codigo }} · {{ proyecto.unidad }}{% if proyecto.estado %} · {{ proyecto.estado }}{% endif %}</div>
+    <h1>{{ proyecto.nombre }}</h1>
+  {% else %}
+    <h1>Nuevo proyecto</h1>
+    <p class="tenue">Primero los datos generales; al guardar se habilitan financiamiento, avance, mediciones, bitácora y el resto.</p>
+  {% endif %}
+</header>
+
+{% if proyecto %}
+<nav class="pestanas-proyecto" aria-label="Secciones del proyecto">
+  {% for clave, nombre in secciones %}
+    <a href="?seccion={{ clave }}{% if incrustado %}&incrustado=1{% endif %}" {% if clave == seccion %}aria-current="page"{% endif %}>{{ nombre }}</a>
+  {% endfor %}
+</nav>
+{% endif %}
+
+<section class="tarjeta-seccion">
+  {% if seccion == "historial" %}
+    <h2>Historial de cambios</h2>
+    <p class="tenue">Quién cambió qué y cuándo, en el proyecto y en todo lo que cuelga de él (últimos 150).</p>
+    <div class="tabla-desplazable">
+    <table class="tabla">
+      <thead><tr><th>Fecha</th><th>Usuario</th><th>Sección</th><th>Acción</th><th>Registro</th><th>Cambios</th></tr></thead>
+      <tbody>
+      {% for h in historial %}
+        <tr><td>{{ h.fecha|date:"d/m/Y H:i" }}</td><td>{{ h.usuario|default:"—" }}</td><td>{{ h.seccion }}</td>
+            <td>{{ h.accion }}</td><td>{{ h.registro }}</td><td class="cambios">{{ h.cambios }}</td></tr>
+      {% empty %}<tr><td colspan="6" class="tenue">Sin cambios registrados.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    </div>
+
+  {% else %}
+  <form method="post" enctype="multipart/form-data" class="form-proyecto" novalidate>
+    {% csrf_token %}
+    {% if not puede_editar and not puede_desembolsos %}<p class="mensaje">Su rol puede ver esta sección pero no modificarla.</p>{% endif %}
+
+    {% if form %}
+      <fieldset {% if not puede_editar %}disabled{% endif %}>
+        {% if form.non_field_errors %}<p class="mensaje error">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+        <div class="rejilla">
+          {% for campo in form %}
+            <label class="{% if campo.name == 'municipios' %}ancho-completo{% elif campo.name == 'nombre' or campo.name == 'observaciones' %}ancho-doble{% endif %}">
+              {{ campo.label }}{% if campo.field.required %} *{% endif %}
+              {% if campo.name == "municipios" %}<input type="search" class="buscar-municipio" placeholder="Buscar municipio…">{% endif %}
+              {{ campo }}
+              {% if campo.help_text %}<small class="tenue">{{ campo.help_text }}</small>{% endif %}
+              {% for e in campo.errors %}<small class="error">{{ e }}</small>{% endfor %}
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      {% if resumen %}
+        <h3>Situación (calculada)</h3>
+        <dl class="resumen">{% for k, v in resumen.items %}<dt>{{ k }}</dt><dd>{{ v|default_if_none:"—" }}</dd>{% endfor %}</dl>
+        <p class="tenue">El estado lo cambia la bitácora; los montos salen del financiamiento y los desembolsos; el avance físico, de la pestaña Avance.</p>
+      {% endif %}
+    {% endif %}
+
+    {% if formset %}
+      <h2>{{ titulo_seccion }}</h2>
+      {% if es_geometria %}<p class="tenue">Las geometrías se dibujan y se modifican en el mapa («Editar en el mapa»). Acá se cambian su nombre y su tipo, o se eliminan.</p>{% endif %}
+      {% if formset.non_form_errors %}<p class="mensaje error">{{ formset.non_form_errors|join:" " }}</p>{% endif %}
+      <fieldset {% if not puede_editar %}disabled{% endif %}>
+        {{ formset.management_form }}
+        <div class="tabla-desplazable">
+        <table class="tabla tabla-editable" data-prefijo="{{ formset.prefix }}">
+          <thead><tr>
+            {% for campo in formset.empty_form.visible_fields %}{% if campo.name != "DELETE" %}<th>{{ campo.label|capfirst }}</th>{% endif %}{% endfor %}
+            {% if seccion == "financiamiento" %}<th>Desembolsado</th>{% endif %}
+            {% if es_documento %}<th>Archivo actual</th>{% endif %}
+            {% if es_geometria %}<th>Mapa</th>{% endif %}
+            <th></th>
+          </tr></thead>
+          <tbody>
+            {% for f in formset %}{% include "proyectos/_fila.html" with extra_financiamiento=es_financiamiento %}{% endfor %}
+          </tbody>
+        </table>
+        </div>
+        {% if puede_editar and formset.extra %}
+          <template data-fila-vacia="{{ formset.prefix }}">{% include "proyectos/_fila.html" with f=formset.empty_form extra_financiamiento=es_financiamiento %}</template>
+          <button type="button" class="boton secundario" data-agregar="{{ formset.prefix }}">+ Agregar fila</button>
+        {% endif %}
+      </fieldset>
+    {% endif %}
+
+    {% if desembolsos %}
+      <h2>Desembolsos</h2>
+      <p class="tenue">Pagos contra lo comprometido por cada entidad. Si una entidad es nueva, guárdela primero arriba.</p>
+      {% if desembolsos.non_form_errors %}<p class="mensaje error">{{ desembolsos.non_form_errors|join:" " }}</p>{% endif %}
+      <fieldset {% if not puede_desembolsos %}disabled{% endif %}>
+        {{ desembolsos.management_form }}
+        <div class="tabla-desplazable">
+        <table class="tabla tabla-editable" data-prefijo="{{ desembolsos.prefix }}">
+          <thead><tr>{% for campo in desembolsos.empty_form.visible_fields %}{% if campo.name != "DELETE" %}<th>{{ campo.label|capfirst }}</th>{% endif %}{% endfor %}<th></th></tr></thead>
+          <tbody>{% for f in desembolsos %}{% include "proyectos/_fila.html" with es_documento=False es_geometria=False extra_financiamiento=False %}{% endfor %}</tbody>
+        </table>
+        </div>
+        {% if puede_desembolsos and desembolsos.extra %}
+          <template data-fila-vacia="{{ desembolsos.prefix }}">{% include "proyectos/_fila.html" with f=desembolsos.empty_form es_documento=False es_geometria=False %}</template>
+          <button type="button" class="boton secundario" data-agregar="{{ desembolsos.prefix }}">+ Agregar desembolso</button>
+        {% endif %}
+      </fieldset>
+    {% endif %}
+
+    {% if puede_editar or puede_desembolsos %}
+      <div class="acciones-guardar"><button class="boton" type="submit">Guardar {{ titulo_seccion|default:"proyecto"|lower }}</button></div>
+    {% endif %}
+  </form>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'proyectos/editar.js' %}"></script>
+{% endblock %}

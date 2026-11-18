@@ -12,6 +12,11 @@ src/media/
 # Variables reales (solo se versiona .env.example)
 deploy/.env
 
+# Copias de la base y de los archivos subidos (contienen datos y usuarios)
+respaldos/
+deploy/respaldos/
+*.dump
+
 # Editores / SO
 .vscode/
 .idea/
