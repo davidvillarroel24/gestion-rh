@@ -2,7 +2,10 @@
 
 import { estado, on, seleccionar } from "./estado.js";
 import { get } from "./api.js";
+import { aUtm } from "./coordenadas.js";
 import { abrirEditor } from "./editor-proyecto.js";
+import { editarGeometria } from "./edicion.js";
+import { getMapa } from "./mapa.js";
 import { aviso, bs, esc, mensaje, panel, pct } from "./ui.js";
 
 const fecha = (f) => (f ? new Date(`${f}T00:00:00`).toLocaleDateString("es-BO") : "—");
@@ -73,6 +76,65 @@ export async function mostrarFicha(id) {
     ?.addEventListener("click", () => abrirEditor({ proyectoId: p.id, titulo: `${p.codigo} – ${p.nombre}` }));
 }
 
+const FORMAS = { Point: "Punto", MultiPoint: "Puntos", LineString: "Línea", MultiLineString: "Líneas",
+                 Polygon: "Polígono", MultiPolygon: "Polígonos" };
+const num = (n, d = 2) => Number(n).toLocaleString("es-BO", { maximumFractionDigits: d, minimumFractionDigits: d });
+
+function filasCoordenada(lat, lon, prefijo = "") {
+  const u = aUtm(lat, lon);
+  return `<dt>${prefijo}Lat, lon</dt><dd>${num(lat, 6)}, ${num(lon, 6)}</dd>
+          <dt>${prefijo}UTM ${u.zona}</dt><dd>E ${num(u.este, 1)} · N ${num(u.norte, 1)}</dd>`;
+}
+
+// Clic en un punto, línea o polígono: datos de ESE elemento (no de todo el proyecto).
+export function mostrarElemento(feature, capa) {
+  const p = feature.properties;
+  const tipo = feature.geometry.type;
+  let medidas = "";
+  if (tipo === "Point") {
+    const [lon, lat] = feature.geometry.coordinates;
+    medidas = filasCoordenada(lat, lon);
+  } else {
+    const vertices = turf.coordAll(feature).length;
+    if (tipo.includes("Polygon")) {
+      const area = turf.area(feature);
+      const perimetro = turf.length(turf.polygonToLine(feature), { units: "kilometers" });
+      medidas = `<dt>Área</dt><dd>${num(area / 10000)} ha</dd><dt>Perímetro</dt><dd>${num(perimetro * 1000, 0)} m</dd>
+                 <dt>Vértices</dt><dd>${tipo === "Polygon" ? vertices - feature.geometry.coordinates.length : vertices}</dd>`;
+    } else {
+      medidas = `<dt>Longitud</dt><dd>${num(turf.length(feature, { units: "kilometers" }) * 1000, 0)} m</dd><dt>Vértices</dt><dd>${vertices}</dd>`;
+    }
+    const [lon, lat] = turf.centroid(feature).geometry.coordinates;
+    medidas += filasCoordenada(lat, lon, "Centro: ");
+  }
+  const puedeEditar = estado.config.permisos.editar_geometria;
+  const html = `
+    <div class="ficha">
+      <div class="codigo">${esc(p.tipo_elemento)} · ${FORMAS[tipo] || tipo}</div>
+      <h3>${esc(p.nombre || "Sin nombre")}</h3>
+      <dl>${medidas}</dl>
+      <h4>Proyecto</h4>
+      <dl>
+        <dt>Código</dt><dd>${esc(p.codigo)}</dd>
+        <dt>Nombre</dt><dd>${esc(p.proyecto)}</dd>
+        <dt>Unidad</dt><dd>${esc(p.unidad)}</dd>
+        <dt>Estado</dt><dd>${esc(p.estado || "—")}</dd>
+      </dl>
+      <p style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
+        <button type="button" class="boton" data-ficha>Ficha del proyecto</button>
+        ${puedeEditar ? '<button type="button" class="boton secundario" data-editar-geometria>Editar geometría</button>' : ""}
+        <button type="button" class="boton secundario" data-zoom>Zoom</button>
+      </p>
+    </div>`;
+  const contenido = panel.abrir("Elemento", html);
+  contenido.querySelector("[data-ficha]").addEventListener("click", () => mostrarFicha(p.proyecto_id));
+  contenido.querySelector("[data-editar-geometria]")?.addEventListener("click", () => editarGeometria(p.id));
+  contenido.querySelector("[data-zoom]").addEventListener("click", () => {
+    if (capa.getBounds) getMapa().fitBounds(capa.getBounds(), { maxZoom: 17 });
+    else getMapa().setView(capa.getLatLng(), Math.max(getMapa().getZoom(), 16));
+  });
+}
+
 function fichaLimite(capa, p) {
   const nombres = { regiones: "Región", provincias: "Provincia", municipios: "Municipio" };
   const filasExtra = capa === "municipios"
@@ -87,8 +149,11 @@ export function iniciarIdentificar() {
   on("modo", (modo) => {
     if (modo === "identificar") mensaje("Identificar: haga clic en un proyecto o en un límite.");
   });
-  on("clic-geometria", ({ feature }) => {
-    if (estado.modo === "identificar") mostrarFicha(feature.properties.proyecto_id);
+  // Sin herramienta activa (o con «Identificar»): el clic muestra el elemento; Ctrl+clic solo suma a la selección.
+  on("clic-geometria", ({ feature, capa, original }) => {
+    if (estado.modo !== null && estado.modo !== "identificar") return;
+    if (original?.ctrlKey || original?.metaKey) return;
+    mostrarElemento(feature, capa);
   });
   on("clic-limite", ({ capa, propiedades }) => {
     if (estado.modo === "identificar") fichaLimite(capa, propiedades);

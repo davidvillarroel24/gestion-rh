@@ -62,7 +62,12 @@ export function iniciarFiltros() {
     actualizarCascada(formulario);
     aplicar({});
   }, 0));
-  // Las listas filtran al instante; los campos de texto, con Enter o "Aplicar".
+  // Las listas filtran al instante; Gestión y Texto, al dejar de escribir (o con Enter / «Aplicar»).
+  let espera = null;
+  formulario.querySelectorAll("input").forEach((campo) => campo.addEventListener("input", () => {
+    clearTimeout(espera);
+    espera = setTimeout(aplicarFormulario, 600);
+  }));
   formulario.querySelectorAll("select").forEach((s) => s.addEventListener("change", () => {
     actualizarCascada(formulario);
     aplicarFormulario();
