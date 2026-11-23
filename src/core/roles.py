@@ -16,6 +16,7 @@ ADMINISTRADOR = "Administrador"
 TECNICO = "Técnico de unidad"
 ENCARGADO_MUNICIPAL = "Encargado municipal"
 FUNCIONARIO_LICENCIAS = "Funcionario de licencias"
+ADMIN_LICENCIAS = "Administrador de licencias"
 CONSULTA = "Consulta"
 
 VER = ["view"]
@@ -48,11 +49,20 @@ ROLES = {
         "proyectos.evento": EDITAR,
         "proyectos.documento": EDITAR,
     },
+    # Licencias ambientales (D32): roles propios, separados de proyectos. El funcionario
+    # registra trámites; las columnas que ve las fija el Administrador de licencias.
     FUNCIONARIO_LICENCIAS: {
         "territorio.*": VER,
-        "core.*": VER,
-        "core.tipodocumento": EDITAR,
         "core.persona": EDITAR,
+        "licencias.*": VER,
+        "licencias.aop": EDITAR,
+        "licencias.tramite": EDITAR,
+        "proyectos.proyecto": VER,
+    },
+    ADMIN_LICENCIAS: {
+        "territorio.*": VER,
+        "core.persona": EDITAR,
+        "licencias.*": BORRAR,
         "proyectos.proyecto": VER,
     },
     CONSULTA: {
@@ -64,10 +74,13 @@ ROLES = {
 
 EXCLUIDOS_DE_COMODIN = {"usuario"}
 
+# "__all__" del Administrador (de proyectos) no incluye estas apps: licencias tiene su propio administrador (D32).
+APPS_SEPARADAS = {"licencias"}
+
 
 def _permisos(definicion):
     if definicion == "__all__":
-        return set(Permission.objects.all())
+        return set(Permission.objects.exclude(content_type__app_label__in=APPS_SEPARADAS))
     # Primero los comodines y después las entradas específicas, que los REEMPLAZAN
     # para ese modelo (así "proyectos.proyecto": EDITAR le quita el borrar que da "proyectos.*").
     acciones_por_modelo = {}

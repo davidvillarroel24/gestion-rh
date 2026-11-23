@@ -5,11 +5,15 @@
 
 {% block contenido %}
 <header class="barra-superior">
-  <a href="{% url 'visor:visor' %}"><strong>Gestión RH</strong></a>
+  <a href="{% url 'core:inicio' %}"><strong>Gestión RH</strong></a>
   <nav>
+    {% if ve_proyectos %}
     <a href="{% url 'visor:visor' %}">Visor</a>
     <a href="{% url 'reportes:pagina' %}">Reportes</a>
     <a href="{% url 'importador:inicio' %}">Importaciones</a>
+    {% endif %}
+    {% if ve_licencias %}<a href="{% url 'licencias:inicio' %}">Licencias</a>{% endif %}
+    {% if administra_licencias %}<a href="{% url 'licencias:configuracion' %}">Configuración</a>{% endif %}
     {% if es_administrador %}<a href="{% url 'core:usuarios' %}">Usuarios</a>{% endif %}
   </nav>
   <span class="usuario">{{ user.get_full_name|default:user.username }}</span>

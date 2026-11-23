@@ -1,0 +1,105 @@
+{% extends "pagina.html" %}
+{% load static %}
+
+{% block titulo %}Licencias{% endblock %}
+
+{% block head %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'proyectos/editar.css' %}">
+  <link rel="stylesheet" href="{% static 'licencias/licencias.css' %}">
+{% endblock %}
+
+{% block pagina %}
+<div class="cabecera-licencias">
+  <h1>Licencias ambientales</h1>
+  <div class="acciones-licencias">
+    <a class="boton secundario" href="{% url 'licencias:excel' %}?{{ parametros }}">Descargar Excel</a>
+    {% if administra_licencias %}<a class="boton secundario" href="{% url 'licencias:configuracion' %}">Configuración</a>{% endif %}
+  </div>
+</div>
+
+<nav class="pestanas-proyecto" aria-label="Tablas">
+  {% for clave, nombre, cantidad in pestanas %}
+    <a href="?pestana={{ clave }}" {% if clave == pestana %}aria-current="page"{% endif %}>{{ nombre }} <span class="cuenta">{{ cantidad }}</span></a>
+  {% endfor %}
+</nav>
+
+<section class="tarjeta-seccion">
+  <form method="get" class="filtros-licencias" id="filtros-licencias">
+    <input type="hidden" name="pestana" value="{{ pestana }}">
+    {% if orden %}<input type="hidden" name="orden" value="{{ orden }}">{% endif %}
+    <label class="ancho">Buscar<input type="search" name="q" value="{{ filtros.q }}" placeholder="AOP, número, representante, consultor…"></label>
+    {% if puede.municipio %}<label>Municipio<select name="municipio"><option value="">Todos</option>
+      {% for m in municipios %}<option value="{{ m.pk }}" {% if filtros.municipio == m.pk|stringformat:"s" %}selected{% endif %}>{{ m.nombre }}</option>{% endfor %}</select></label>{% endif %}
+    {% if puede.tipo_documento %}<label>Tipo de documento<select name="tipo_documento"><option value="">Todos</option>
+      {% for x in tipos_documento %}<option value="{{ x.pk }}" {% if filtros.tipo_documento == x.pk|stringformat:"s" %}selected{% endif %}>{{ x.sigla|default:x.nombre }}</option>{% endfor %}</select></label>{% endif %}
+    {% if puede.categoria %}<label>Categoría<select name="categoria"><option value="">Todas</option>
+      {% for x in categorias %}<option value="{{ x.pk }}" {% if filtros.categoria == x.pk|stringformat:"s" %}selected{% endif %}>{{ x.nombre }}</option>{% endfor %}</select></label>{% endif %}
+    {% if puede.tipo_ingreso %}<label>Tipo de ingreso<select name="tipo_ingreso"><option value="">Todos</option>
+      {% for x in tipos_ingreso %}<option value="{{ x.pk }}" {% if filtros.tipo_ingreso == x.pk|stringformat:"s" %}selected{% endif %}>{{ x.nombre }}</option>{% endfor %}</select></label>{% endif %}
+    {% if puede.tecnico %}<label>Técnico<input name="tecnico" list="lista-tecnicos" value="{{ filtros.tecnico }}"></label>
+      <datalist id="lista-tecnicos">{% for t in tecnicos %}<option value="{{ t }}">{% endfor %}</datalist>{% endif %}
+    {% if puede.legal %}<label>Legal<input name="legal" list="lista-legales" value="{{ filtros.legal }}"></label>
+      <datalist id="lista-legales">{% for t in legales %}<option value="{{ t }}">{% endfor %}</datalist>{% endif %}
+    <label>Año<input type="number" name="anio" min="1990" max="2100" value="{{ filtros.anio }}"></label>
+    <label>Desde<input type="date" name="desde" value="{{ filtros.desde }}"></label>
+    <label>Hasta<input type="date" name="hasta" value="{{ filtros.hasta }}"></label>
+    <div class="botones-filtros">
+      <button class="boton" type="submit">Filtrar</button>
+      <a class="boton secundario" href="?pestana={{ pestana }}">Limpiar</a>
+    </div>
+  </form>
+
+  <div class="barra-tabla">
+    <span><strong>{{ total }}</strong> trámite{{ total|pluralize }}{% if pagina.paginator.num_pages > 1 %} · página {{ pagina.number }} de {{ pagina.paginator.num_pages }}{% endif %}</span>
+    <span class="leyenda"><span class="muestra vencido"></span> vencido <span class="muestra por_vencer"></span> por vencer</span>
+    <details class="elegir-columnas">
+      <summary>Columnas</summary>
+      <form method="post" action="{% url 'licencias:columnas' %}">
+        {% csrf_token %}
+        <input type="hidden" name="volver" value="{{ request.get_full_path }}">
+        <div class="lista-columnas">
+          {% for clave, titulo, visible in columnas_permitidas %}
+            <label><input type="checkbox" name="columnas" value="{{ clave }}" {% if visible %}checked{% endif %}> {{ titulo }}</label>
+          {% endfor %}
+        </div>
+        <button class="boton" type="submit">Aplicar columnas</button>
+      </form>
+    </details>
+  </div>
+
+  <div class="tabla-desplazable">
+  <table class="tabla tabla-licencias">
+    <thead><tr>
+      {% for clave, titulo, ordenable in encabezados %}
+        <th>{% if ordenable %}<a href="?{{ sin_orden }}{% if sin_orden %}&{% endif %}orden={% if orden_campo == clave and not orden_desc %}-{% endif %}{{ clave }}">{{ titulo }}{% if orden_campo == clave %} {% if orden_desc %}▼{% else %}▲{% endif %}{% endif %}</a>{% else %}{{ titulo }}{% endif %}</th>
+      {% endfor %}
+    </tr></thead>
+    <tbody>
+      {% for t, estado, valores in filas %}
+        <tr class="{{ estado }}">{% for v in valores %}<td>{{ v }}</td>{% endfor %}</tr>
+      {% empty %}
+        <tr><td colspan="{{ encabezados|length }}" class="tenue">No hay trámites{% if filtros.q or filtros.municipio or filtros.tipo_documento %} con esos filtros{% endif %}.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  {% if pagina.paginator.num_pages > 1 %}
+  <nav class="paginacion" aria-label="Páginas">
+    {% if pagina.has_previous %}<a href="?{{ sin_pagina }}{% if sin_pagina %}&{% endif %}pagina=1">« Primera</a>
+      <a href="?{{ sin_pagina }}{% if sin_pagina %}&{% endif %}pagina={{ pagina.previous_page_number }}">‹ Anterior</a>{% endif %}
+    <span>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+    {% if pagina.has_next %}<a href="?{{ sin_pagina }}{% if sin_pagina %}&{% endif %}pagina={{ pagina.next_page_number }}">Siguiente ›</a>
+      <a href="?{{ sin_pagina }}{% if sin_pagina %}&{% endif %}pagina={{ pagina.paginator.num_pages }}">Última »</a>{% endif %}
+  </nav>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Las listas filtran al elegir; los textos y fechas, con Enter o «Filtrar».
+  document.querySelectorAll("#filtros-licencias select").forEach((s) => s.addEventListener("change", () => s.form.submit()));
+</script>
+{% endblock %}

@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "visor",
     "importador",
     "reportes",
+    "licencias",
 ]
 
 # Usuario propio (con unidades y municipios asignados). Definido desde el inicio:

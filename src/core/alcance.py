@@ -31,11 +31,31 @@ def es_administrador(usuario):
     return usuario.is_authenticated and (usuario.is_superuser or roles.ADMINISTRADOR in nombres_de_roles(usuario))
 
 
+ROLES_LICENCIAS = {roles.FUNCIONARIO_LICENCIAS, roles.ADMIN_LICENCIAS}
+ROLES_PROYECTOS = {roles.ADMINISTRADOR, roles.TECNICO, roles.ENCARGADO_MUNICIPAL, roles.CONSULTA}
+
+
+def ve_licencias(usuario):
+    """Licencias ambientales (D32): superusuario y los dos roles de licencias. El Administrador de proyectos no."""
+    return usuario.is_authenticated and (usuario.is_superuser or bool(nombres_de_roles(usuario) & ROLES_LICENCIAS))
+
+
+def administra_licencias(usuario):
+    """Ve todas las columnas, la papelera y edita la configuración del módulo."""
+    return usuario.is_authenticated and (usuario.is_superuser or roles.ADMIN_LICENCIAS in nombres_de_roles(usuario))
+
+
+def ve_proyectos(usuario):
+    return usuario.is_authenticated and (usuario.is_superuser or bool(nombres_de_roles(usuario) & ROLES_PROYECTOS))
+
+
 def pagina_inicio(usuario):
-    """A dónde va cada usuario al ingresar. El alcance ya limita el visor a su área;
-    los funcionarios de licencias irán al módulo de licencias cuando exista (Fase 11)."""
+    """A dónde va cada usuario al ingresar: los de licencias (sin rol de proyectos) a su tabla, sin mapa;
+    el resto al visor, que ya muestra solo su área."""
     from django.urls import reverse
 
+    if ve_licencias(usuario) and not ve_proyectos(usuario):
+        return reverse("licencias:inicio")
     return reverse("visor:visor")
 
 

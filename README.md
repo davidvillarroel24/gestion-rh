@@ -112,6 +112,15 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
 
 `/reportes/ficha/` (en el visor: Reportes → Ficha técnica, o el botón «Ficha técnica» del panel de un proyecto). Usa los filtros del visor —incluido **Programa**— o la selección. Se elige **una ficha del conjunto** o **una por proyecto** (máximo 60 por página), se escriben título y objetivo (no se guardan), y se imprime / guarda como PDF desde el navegador o se descarga en Excel con el formato de `1FICHA TECNICA.xlsx`. Los montos van en letras (`reportes/letras.py`).
 
+## Licencias ambientales (área de Fiscalización)
+
+`/licencias/` — sin mapa (D31). Roles propios, separados de proyectos (D32): **Administrador de licencias** (todas las columnas, papelera y configuración) y **Funcionario de licencias** (recepción). El Administrador de proyectos no entra; el superusuario ve todo. Quien solo tiene roles de licencias entra directo a su tabla y no ve el visor.
+
+- **Tabla** (etapa 11.2): pestañas Trámites (IRAP) · Consultas de categoría · Papelera; búsqueda y filtros (municipio, tipo de documento, categoría, tipo de ingreso, técnico, legal, año, fechas); orden por columna; 50 filas por página; **Columnas** elegibles (se recuerdan por usuario, solo entre las que permite su rol); vencidos en rojo y por vencer en amarillo; **Descargar Excel** con lo filtrado.
+- **Configuración** (`/licencias/configuracion/`, solo Administrador de licencias): categorías con sus **días** (desde la presentación o el resultado, calendario o hábiles), tipos de documento (anual = IMA; «consulta de categoría» = CNCA), tipos de ingreso, feriados, días de aviso y **columnas que ve el funcionario** (al inicio, las de la app anterior). Lo que ya usan trámites no se borra: se desactiva.
+- Valores iniciales (migración `licencias/0002`): tipos de ingreso y los tipos de documento más usados de la planilla. Las categorías las escribe el área.
+- Vencimiento: `licencias/plazos.py`. Próximas etapas: formularios y ficha de AOP (11.3), grilla «Pegar desde Excel» (11.4), migración de la planilla y revisor de datos (11.5), alertas (11.6), vínculo con proyectos (11.7).
+
 ## Importar y exportar
 
 `/importar/` (en el visor: Datos → Importar / Plantillas Excel / Exportar).

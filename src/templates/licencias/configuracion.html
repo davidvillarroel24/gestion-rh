@@ -1,0 +1,69 @@
+{% extends "pagina.html" %}
+{% load static %}
+
+{% block titulo %}Configuración de licencias{% endblock %}
+
+{% block head %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'proyectos/editar.css' %}">
+{% endblock %}
+
+{% block pagina %}
+<p><a href="{% url 'licencias:inicio' %}">← Licencias</a></p>
+<h1>Configuración de licencias</h1>
+<p class="tenue">Todo lo que el área define y corrige: categorías con sus días, tipos de documento, tipos de ingreso, feriados y las columnas que ve el funcionario.</p>
+
+<nav class="pestanas-proyecto" aria-label="Secciones de la configuración">
+  {% for clave, nombre in secciones %}
+    <a href="?seccion={{ clave }}" {% if clave == seccion %}aria-current="page"{% endif %}>{{ nombre }}</a>
+  {% endfor %}
+</nav>
+
+<section class="tarjeta-seccion">
+  <form method="post" class="form-proyecto" novalidate>
+    {% csrf_token %}
+    <h2>{{ titulo_seccion }}</h2>
+
+    {% if form %}
+      {% if form.non_field_errors %}<p class="mensaje error">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+      <label>{{ form.dias_aviso.label }}{{ form.dias_aviso }}<small class="tenue">{{ form.dias_aviso.help_text }}</small>
+        {% for e in form.dias_aviso.errors %}<small class="error">{{ e }}</small>{% endfor %}</label>
+      <fieldset class="columnas-funcionario">
+        <legend>{{ form.columnas_funcionario.label }}</legend>
+        <small class="tenue">{{ form.columnas_funcionario.help_text }}</small>
+        {{ form.columnas_funcionario }}
+      </fieldset>
+    {% endif %}
+
+    {% if formset %}
+      {% if ayuda %}<p class="tenue">{{ ayuda }}</p>{% endif %}
+      {% if formset.non_form_errors %}<p class="mensaje error">{{ formset.non_form_errors|join:" " }}</p>{% endif %}
+      {{ formset.management_form }}
+      <div class="tabla-desplazable">
+      <table class="tabla tabla-editable" data-prefijo="{{ formset.prefix }}">
+        <thead><tr>
+          {% for campo in formset.empty_form.visible_fields %}{% if campo.name != "DELETE" %}<th>{{ campo.label|capfirst }}</th>{% endif %}{% endfor %}
+          <th></th>
+        </tr></thead>
+        <tbody>{% for f in formset %}{% include "proyectos/_fila.html" %}{% endfor %}</tbody>
+      </table>
+      </div>
+      <template data-fila-vacia="{{ formset.prefix }}">{% include "proyectos/_fila.html" with f=formset.empty_form %}</template>
+      <button type="button" class="boton secundario" data-agregar="{{ formset.prefix }}">+ Agregar fila</button>
+    {% endif %}
+
+    <div class="acciones-guardar"><button class="boton" type="submit">Guardar</button></div>
+  </form>
+</section>
+
+<style>
+  .columnas-funcionario { margin-top: 12px !important; padding: 10px 12px !important; border: 1px solid #e1e5ea !important; border-radius: 6px; }
+  .columnas-funcionario > div { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 4px 14px; margin-top: 6px; }
+  .tarjeta-seccion .columnas-funcionario label { flex-direction: row; display: flex; gap: 6px; align-items: center; font-size: 0.9rem; }
+  .form-proyecto > label { display: flex; flex-direction: column; gap: 4px; max-width: 260px; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'proyectos/editar.js' %}"></script>
+{% endblock %}
