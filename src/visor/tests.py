@@ -41,6 +41,13 @@ class VisorApiTests(Base):
         c = self.client.get("/visor/api/config/").json()
         self.assertTrue(c["permisos"]["crear_geometria"])
         self.assertEqual({t["nombre"] for t in c["tipos_elemento"]}, {"Toma de agua", "Canal", "Área de riego"})
+        self.assertEqual(c["gestiones"], [{"id": 2026, "nombre": "2026"}], "solo gestiones con proyectos (sin las vacías)")
+        self.proyecto(nombre="Otro", municipios=[self.m3], gestion=2019)
+        anios = [g["id"] for g in self.client.get("/visor/api/config/").json()["gestiones"]]
+        self.assertEqual(anios, [2026, 2019], "la más reciente primero")
+        self.client.force_login(self.enc)
+        self.assertEqual([g["id"] for g in self.client.get("/visor/api/config/").json()["gestiones"]], [2026],
+                         "respeta el alcance: el encargado de Punata no ve la gestión 2019 de otro municipio")
 
     def test_geometrias_respetan_alcance_y_filtros(self):
         self.client.force_login(self.enc)
@@ -50,6 +57,9 @@ class VisorApiTests(Base):
         self.assertEqual(len(self.client.get("/visor/api/geometrias/").json()["features"]), 2)
         filtrado = self.client.get("/visor/api/geometrias/", {"municipio": self.m3.id}).json()["features"]
         self.assertEqual([f["id"] for f in filtrado], [self.g2.id])
+        varios = self.client.get("/visor/api/geometrias/", {"municipio": f"{self.m1.id},{self.m3.id}"}).json()["features"]
+        self.assertEqual(sorted(f["id"] for f in varios), sorted([self.g1.id, self.g2.id]), "varios valores = cualquiera de ellos")
+        self.assertEqual(len(self.client.get("/visor/api/geometrias/", {"municipio": "x,"}).json()["features"]), 2, "basura se ignora")
         en_caja = self.client.get("/visor/api/geometrias/", {"bbox": "0,0,1,1"}).json()["features"]
         self.assertEqual([f["id"] for f in en_caja], [self.g1.id])
         self.assertEqual(self.client.get("/visor/api/geometrias/", {"bbox": "x"}).status_code, 400)
@@ -115,6 +125,7 @@ class VisorApiTests(Base):
         self.assertEqual((fila["costo_total"], fila["desembolsado"], fila["avance_financiero"], fila["avance_fisico"]),
                          (1500.0, 300.0, 20.0, 40.0))
         self.assertEqual(fila["municipios"], "Punata, Tacachi")
+        self.assertEqual(sorted(fila["municipio_ids"]), sorted([self.m1.id, self.m2.id]), "para el relleno de lo filtrado")
         self.assertEqual(filas[self.ajeno.id]["costo_total"], 0.0)
         por_municipio = self.client.get("/visor/api/proyectos/", {"municipio": self.m2.id}).json()["filas"]
         self.assertEqual([x["id"] for x in por_municipio], [self.propio.id])

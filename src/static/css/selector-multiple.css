@@ -1,0 +1,19 @@
+/* Selector con búsqueda y selección múltiple (static/js/selector-multiple.js). */
+
+.selector-multiple { position: relative; width: 100%; font-size: 13px; }
+.selector-multiple .sm-boton { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; padding: 5px 8px;
+  font: inherit; color: #1f2933; text-align: left; background: #fff; border: 1px solid #cbd2d9; border-radius: 4px; cursor: pointer; }
+.selector-multiple.con-valor .sm-boton { border-color: #0b6e4f; box-shadow: inset 3px 0 0 #0b6e4f; }
+.selector-multiple .sm-texto { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.selector-multiple .sm-flecha { color: #616e7c; font-size: 11px; }
+.selector-multiple .sm-menu { position: absolute; left: 0; right: 0; z-index: 1200; margin-top: 2px; padding: 6px; background: #fff;
+  border: 1px solid #cbd2d9; border-radius: 6px; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.15); }
+.selector-multiple .sm-menu[hidden] { display: none; }
+.selector-multiple .sm-buscar { width: 100%; box-sizing: border-box; padding: 5px 7px; font: inherit; border: 1px solid #cbd2d9; border-radius: 4px; }
+.selector-multiple .sm-acciones { display: flex; justify-content: space-between; margin: 4px 0; }
+.selector-multiple .sm-acciones button { padding: 2px 4px; font: inherit; font-size: 12px; color: #0b6e4f; background: none; border: 0; cursor: pointer; }
+.selector-multiple .sm-lista { max-height: 240px; overflow-y: auto; }
+.selector-multiple .sm-opcion { display: flex !important; flex-direction: row !important; align-items: center; gap: 6px; margin: 0 !important;
+  padding: 3px 4px; font-size: 13px !important; color: #1f2933 !important; border-radius: 3px; cursor: pointer; }
+.selector-multiple .sm-opcion:hover { background: #f0f3f6; }
+.selector-multiple .sm-vacio { margin: 6px 4px; color: #616e7c; }

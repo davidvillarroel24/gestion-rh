@@ -6,6 +6,7 @@ import { estado, on, setModo } from "./estado.js";
 import { enviar, textoError } from "./api.js";
 import { capaDeGeometria, recargarProyectos } from "./capas.js";
 import { aLatLng, camposCoordenadas, enlazarEtiquetas } from "./coordenadas.js";
+import { crearEditorGeometria } from "./editor-geometria.js";
 import { getMapa } from "./mapa.js";
 import { aviso, esc, mensaje, nodo, opciones, panel } from "./ui.js";
 
@@ -14,6 +15,7 @@ const NOMBRE_FORMA = { Point: "punto", LineString: "línea", Polygon: "polígono
 
 let contexto = null;  // { proyecto, tipo_elemento, nombre, tipo, continuo } mientras se dibuja
 let enEdicion = null; // capa que se está editando
+let editor = null;    // herramientas del editor de geometría (editor-geometria.js)
 
 const proyectoPorId = (id) => estado.filas.find((f) => f.id === Number(id));
 
@@ -147,16 +149,16 @@ export function editar() {
 
 function activarEdicion(capa) {
   desactivarEdicion();
+  // Modo «editar»: los clics en el mapa son para el editor (no abren la ficha ni seleccionan).
+  if (estado.modo !== "editar") setModo("editar", { alternar: false });
   enEdicion = capa;
   const p = capa.feature.properties;
   const tipoGeometria = capa.feature.geometry.type;
-  if (tipoGeometria === "Point") capa.pm.enableLayerDrag();
-  else capa.pm.enable({ allowSelfIntersection: false });
 
   const tipos = tiposPara(p.proyecto_id, tipoGeometria);
   const formulario = nodo(`<form class="formulario">
     <p><strong>${esc(p.codigo)}</strong> – ${esc(p.proyecto)}</p>
-    <p class="tenue">${tipoGeometria === "Point" ? "Arrastre el punto" : "Mueva los vértices"} y guarde.</p>
+    <div data-editor></div>
     <label>Tipo de elemento<select name="tipo_elemento">${opciones(tipos, { seleccionado: p.tipo_elemento_id })}</select></label>
     <label>Nombre<input name="nombre" maxlength="150" value="${esc(p.nombre)}"></label>
     <div class="acciones">
@@ -164,6 +166,9 @@ function activarEdicion(capa) {
       <button type="button" class="boton secundario" data-cancelar>Cancelar</button>
       ${estado.config.permisos.borrar_geometria ? '<button type="button" class="boton peligro" data-eliminar>Eliminar</button>' : ""}
     </div></form>`);
+
+  editor = crearEditorGeometria(capa);
+  formulario.querySelector("[data-editor]").replaceWith(editor.panel);
 
   formulario.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -200,6 +205,8 @@ function activarEdicion(capa) {
 }
 
 function desactivarEdicion() {
+  editor?.destruir();
+  editor = null;
   if (!enEdicion) return;
   enEdicion.pm.disable();
   enEdicion.pm.disableLayerDrag?.();

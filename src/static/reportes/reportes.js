@@ -23,30 +23,31 @@
     : `${(Number(n) / 1e6).toLocaleString("es-BO", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} M`);
   const num = (n) => (n === null || n === undefined ? "—" : Number(n).toLocaleString("es-BO", { maximumFractionDigits: 2 }));
 
-  function llenar(select, lista, vacio) {
-    const actual = select.value || select.dataset.inicial || "";
-    select.replaceChildren(new Option(vacio, ""), ...lista.map((x) => new Option(x.nombre, x.id)));
-    select.value = lista.some((x) => String(x.id) === String(actual)) ? actual : "";
-    delete select.dataset.inicial;
-  }
+  // Listas con buscador y selección múltiple (igual que en el visor): se envían como "1,3".
+  const LISTAS = [["unidad", "Todas"], ["programa", "Todos"], ["estado", "Todos"], ["region", "Todas"],
+                  ["provincia", "Todas"], ["municipio", "Todos"], ["gestion", "Todas"]];
+  const selectores = {};
+  const elegidos = (nombre) => new Set(selectores[nombre].valor().split(",").filter(Boolean).map(Number));
 
   // Región → Provincia → Municipio en cascada (igual que en el visor).
   function cascada() {
-    const unidad = Number(formulario.unidad.value) || null;
-    llenar(formulario.programa, definicion.programas.filter((p) => !unidad || p.unidad === unidad), "Todos");
-    const region = Number(formulario.region.value) || null;
-    const provincia = Number(formulario.provincia.value) || null;
-    const enRegion = definicion.municipios.filter((m) => !region || m.region === region);
-    const provincias = new Set(enRegion.map((m) => m.provincia));
-    const regiones = new Set(definicion.municipios.filter((m) => !provincia || m.provincia === provincia).map((m) => m.region));
-    llenar(formulario.region, definicion.regiones.filter((r) => regiones.has(r.id)), "Todas");
-    llenar(formulario.provincia, definicion.provincias.filter((p) => provincias.has(p.id)), "Todas");
-    llenar(formulario.municipio, enRegion.filter((m) => !provincia || m.provincia === provincia), "Todos");
+    const unidades = elegidos("unidad");
+    const regiones = elegidos("region");
+    const provincias = elegidos("provincia");
+    selectores.programa.opciones(definicion.programas.filter((p) => !unidades.size || unidades.has(p.unidad)));
+    const enRegiones = definicion.municipios.filter((m) => !regiones.size || regiones.has(m.region));
+    const provinciasPosibles = new Set(enRegiones.map((m) => m.provincia));
+    const regionesPosibles = new Set(definicion.municipios.filter((m) => !provincias.size || provincias.has(m.provincia)).map((m) => m.region));
+    selectores.region.opciones(definicion.regiones.filter((r) => regionesPosibles.has(r.id)));
+    selectores.provincia.opciones(definicion.provincias.filter((p) => provinciasPosibles.has(p.id)));
+    selectores.municipio.opciones(enRegiones.filter((m) => !provincias.size || provincias.has(m.provincia)));
   }
 
   function parametros() {
     const p = new URLSearchParams();
-    new FormData(formulario).forEach((valor, clave) => { if (valor) p.set(clave, valor); });
+    LISTAS.forEach(([nombre]) => { if (selectores[nombre].valor()) p.set(nombre, selectores[nombre].valor()); });
+    const q = formulario.q.value.trim();
+    if (q) p.set("q", q);
     p.set("por", porSelect.value);
     return p;
   }
@@ -159,21 +160,27 @@
     alertas(datos.alertas);
   }
 
-  // Filtros iniciales desde la URL (el visor abre esta página con sus filtros).
+  // Filtros iniciales desde la URL (el visor abre esta página con sus filtros, también los múltiples).
   const inicial = new URLSearchParams(location.search);
-  ["programa", "region", "provincia", "municipio"].forEach((n) => { if (inicial.get(n)) formulario[n].dataset.inicial = inicial.get(n); });
-  llenar(formulario.unidad, definicion.unidades, "Todas");
-  llenar(formulario.estado, definicion.estados, "Todos");
-  formulario.unidad.value = inicial.get("unidad") || "";
-  formulario.estado.value = inicial.get("estado") || "";
-  formulario.gestion.value = inicial.get("gestion") || "";
+  LISTAS.forEach(([nombre, vacio]) => {
+    selectores[nombre] = new window.SelectorMultiple(formulario.querySelector(`[data-selector="${nombre}"]`), {
+      nombre, vacio, alCambiar: () => { cascada(); cargar(); },
+    });
+    selectores[nombre].fijar(inicial.get(nombre));
+  });
+  selectores.unidad.opciones(definicion.unidades);
+  selectores.estado.opciones(definicion.estados);
+  selectores.gestion.opciones(definicion.gestiones);
   formulario.q.value = inicial.get("q") || "";
   if (inicial.get("por")) porSelect.value = inicial.get("por");
   cascada();
 
   formulario.addEventListener("submit", (e) => { e.preventDefault(); cargar(); });
-  formulario.addEventListener("reset", () => setTimeout(() => { cascada(); cargar(); }, 0));
-  formulario.querySelectorAll("select").forEach((s) => s.addEventListener("change", () => { cascada(); cargar(); }));
+  formulario.addEventListener("reset", () => setTimeout(() => {
+    Object.values(selectores).forEach((s) => s.limpiar());
+    cascada();
+    cargar();
+  }, 0));
   porSelect.addEventListener("change", cargar);
   medidaSelect.addEventListener("change", () => datos && agrupado(datos.agrupado));
   cargar();

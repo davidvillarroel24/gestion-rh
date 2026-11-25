@@ -138,6 +138,8 @@ html, body {
 
 #filtros label { display: block; margin-top: 6px; font-size: 12px; color: var(--tenue); }
 #filtros select, #filtros input { width: 100%; padding: 4px; border: 1px solid var(--borde); border-radius: 4px; }
+#filtros .selector-multiple input[type="checkbox"] { width: auto; padding: 0; }
+#filtros .selector-multiple { margin-top: 2px; }
 
 .capa {
   display: grid;
@@ -148,7 +150,25 @@ html, body {
 }
 
 .capa-grupo { margin: 8px 0 2px; font-weight: 600; }
-.capa-simbolo { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; }
+.capa-simbolo { display: inline-block; width: 16px; height: 16px; margin-right: 6px; padding: 0; vertical-align: middle;
+  border-radius: 3px; border: 2.5px solid; cursor: pointer; }
+.capa-simbolo:hover { outline: 2px solid #cbd2d9; outline-offset: 1px; }
+.paleta-capa { position: fixed; z-index: 3000; width: 196px; padding: 8px; background: #fff; border: 1px solid var(--borde);
+  border-radius: 6px; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18); font-size: 12px; }
+.paleta-colores { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.paleta-colores button { width: 20px; height: 20px; padding: 0; border: 1px solid rgba(0, 0, 0, 0.2); border-radius: 4px; cursor: pointer; }
+.paleta-colores button.elegido { outline: 2px solid #111; outline-offset: 1px; }
+.paleta-capa label { display: flex; align-items: center; gap: 6px; margin-top: 8px; cursor: pointer; }
+.paleta-capa.con-partes { width: 236px; }
+.paleta-partes { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--borde); }
+.paleta-partes .pp-titulo { font-weight: 600; }
+.paleta-partes .pp-titulo span { font-weight: 400; color: var(--tenue); }
+.paleta-partes input[type="search"] { width: 100%; box-sizing: border-box; margin-top: 4px; padding: 4px 6px; font: inherit; border: 1px solid var(--borde); border-radius: 4px; }
+.paleta-partes .pp-acciones { display: flex; gap: 8px; margin: 4px 0; }
+.paleta-partes .pp-acciones button { padding: 0; font: inherit; color: var(--verde); background: none; border: 0; cursor: pointer; }
+.paleta-partes .pp-lista { max-height: 180px; overflow-y: auto; }
+.paleta-partes .pp-lista label { margin-top: 0; padding: 2px 0; }
+.paleta-otro input[type="color"] { width: 32px; height: 22px; padding: 0; border: 1px solid var(--borde); background: none; }
 .capa input[type="range"] { width: 60px; }
 
 #mapa { grid-area: mapa; min-height: 0; }
@@ -284,3 +304,38 @@ html, body {
 #editor-proyecto .panel-cabecera h2 { font-size: 1rem; }
 #editor-proyecto-marco { flex: 1; width: 100%; border: 0; }
 #visor.editando #mapa, #visor.editando #tabla, #visor.editando #panel-derecho { display: none !important; }
+
+/* Editor de geometría: herramientas, tabla de vértices y números en el mapa. */
+.editor-geometria .herramientas { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 6px 0; }
+.editor-geometria .herramientas button { padding: 6px 4px; font: inherit; font-size: 12px; background: #eef1f4; border: 1px solid var(--borde); border-radius: 4px; cursor: pointer; }
+.editor-geometria .herramientas button.activo { color: #fff; background: var(--verde); border-color: var(--verde); }
+.editor-geometria .ayuda-herramienta { min-height: 2.4em; margin: 4px 0; font-size: 12px; }
+.editor-geometria .deshacer { display: flex; gap: 6px; }
+.editor-geometria .deshacer .boton { padding: 4px 8px; font-size: 12px; }
+.editor-geometria .medidas { display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; margin: 8px 0; font-size: 12px; }
+.editor-geometria .medidas dd { margin: 0; font-variant-numeric: tabular-nums; }
+.editor-geometria fieldset { margin: 8px 0; padding: 6px 8px; border: 1px solid var(--borde); border-radius: 4px; }
+.editor-geometria legend { font-size: 12px; color: var(--tenue); }
+.editor-geometria .fila-coordenadas { display: flex; gap: 4px; margin-top: 4px; }
+.editor-geometria .fila-coordenadas input { width: 0; flex: 1; }
+.editor-geometria .fila-coordenadas .boton { padding: 4px 8px; font-size: 12px; white-space: nowrap; }
+.editor-geometria .vertices summary { cursor: pointer; font-size: 12px; font-weight: 600; margin: 6px 0; }
+.editor-geometria .tabla-vertices { max-height: 240px; overflow: auto; border: 1px solid var(--borde); border-radius: 4px; }
+.editor-geometria .tabla-vertices table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.editor-geometria .tabla-vertices th { position: sticky; top: 0; background: #f0f3f6; text-align: left; padding: 3px 4px; }
+.editor-geometria .tabla-vertices td { padding: 1px 3px; }
+.editor-geometria .tabla-vertices input { width: 100%; padding: 2px 3px; font: inherit; border: 1px solid transparent; }
+.editor-geometria .tabla-vertices input:focus { border-color: var(--verde); outline: none; }
+.editor-geometria .acciones-vertice { white-space: nowrap; }
+.editor-geometria .acciones-vertice button { width: 20px; padding: 0; font: inherit; background: none; border: 1px solid var(--borde); border-radius: 3px; cursor: pointer; }
+.editor-geometria .pegar textarea { width: 100%; font: 12px monospace; }
+.etiqueta-vertice { padding: 0 4px; font: 600 11px/16px sans-serif; color: #fff; background: rgba(11, 110, 79, 0.9); border-radius: 8px;
+  transform: translate(6px, -18px); white-space: nowrap; pointer-events: none; }
+.leaflet-container.cursor-agregar, .leaflet-container.cursor-agregar .leaflet-interactive { cursor: crosshair; }
+#panel-derecho .formulario:has(.editor-geometria) .acciones { position: sticky; bottom: 0; padding: 8px 0; margin-bottom: -10px; background: var(--superficie); border-top: 1px solid var(--borde); }
+
+/* Filtros: «Relleno transparente en lo filtrado» */
+#filtros label.relleno-filtro { display: flex; align-items: center; gap: 6px; margin-top: 8px; color: inherit; cursor: pointer; }
+#filtros label.relleno-filtro input { width: auto; }
+#filtros label.relleno-filtro small { display: none; color: var(--tenue); }
+#filtros label.relleno-filtro.sin-efecto small { display: inline; }

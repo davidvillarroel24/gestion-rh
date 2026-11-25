@@ -164,14 +164,19 @@ MAPAS_BASE = [
     {"id": "topo", "nombre": "Relieve (OpenTopoMap)", "url": "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
      "atribucion": '&copy; OpenStreetMap, SRTM | &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)',
      "max_zoom": 17},
-    {"id": "claro", "nombre": "Claro (CARTO)", "url": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-     "atribucion": '&copy; OpenStreetMap &copy; <a href="https://carto.com/attributions">CARTO</a>', "max_zoom": 20},
-    {"id": "oscuro", "nombre": "Oscuro (CARTO)", "url": "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-     "atribucion": '&copy; OpenStreetMap &copy; <a href="https://carto.com/attributions">CARTO</a>', "max_zoom": 20},
-    {"id": "satelite", "nombre": "Satélite (Esri)",
+    # Imagen satelital reciente y sin clave: mosaico anual sin nubes de Sentinel-2 (10 m por píxel; nítido hasta
+    # ~1:20.000). Licencia CC BY-NC-SA 4.0 (uso no comercial, con esta atribución). Cada año sale una versión nueva:
+    # para actualizar, cambiar el año en la URL (verificar antes que ya exista).
+    {"id": "sentinel", "nombre": "Satélite 2025 (Sentinel-2)",
+     "url": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg",
+     "atribucion": '<a href="https://s2maps.eu">Sentinel-2 cloudless – s2maps.eu</a> by EOX IT Services GmbH '
+                   "(contiene datos modificados de Copernicus Sentinel 2025)", "max_zoom": 17},
+    # Más detalle (submétrico) pero con fechas de captura que varían por zona y pueden ser antiguas.
+    {"id": "satelite", "nombre": "Satélite detallado (Esri)",
      "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
      "atribucion": "Tiles &copy; Esri", "max_zoom": 19},
 ]
+# Se quitaron «Claro» y «Oscuro» (CARTO): desde 2026 piden clave de API.
 
 LOGIN_URL = "core:ingresar"
 LOGIN_REDIRECT_URL = "core:inicio"  # redirige según el rol (core.alcance.pagina_inicio)

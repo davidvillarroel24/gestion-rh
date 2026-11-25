@@ -8,6 +8,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 
 from core import alcance
+from proyectos import consultas
 from proyectos.models import EstadoProyecto, Programa
 from territorio.models import Provincia, Region
 
@@ -31,6 +32,7 @@ def pagina(request):
             "programas": [{"id": x.id, "nombre": x.nombre, "unidad": x.unidad_id} for x in Programa.objects.filter(
                 activo=True, unidad__in=alcance.unidades_visibles(u)).order_by("nombre")],
             "regiones": [{"id": x.id, "nombre": x.nombre} for x in Region.objects.order_by("nombre")],
+            "gestiones": consultas.gestiones(u),
             "provincias": [{"id": x.id, "nombre": x.nombre} for x in Provincia.objects.order_by("nombre")],
             "municipios": [{"id": m.id, "nombre": m.nombre, "provincia": m.provincia_id, "region": m.region_id}
                            for m in alcance.municipios_visibles(u).order_by("nombre")],

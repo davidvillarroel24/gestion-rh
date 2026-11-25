@@ -36,23 +36,27 @@ def visibles(usuario):
     return alcance.filtrar(Proyecto.objects.vigentes(), usuario, "unidad", "municipios")
 
 
+def gestiones(usuario):
+    """Gestiones que tienen proyectos visibles para el usuario, la más reciente primero (para los filtros)."""
+    anios = visibles(usuario).exclude(gestion=None).values_list("gestion", flat=True).distinct().order_by("-gestion")
+    return [{"id": a, "nombre": str(a)} for a in anios]
+
+
 def filtrar(qs, parametros):
     """
     Filtros comunes del visor, los reportes y la exportación:
     unidad, programa, tipo, estado, region, provincia, municipio, gestion (números), q (texto)
-    e ids (selección del visor, "1,2,3").
+    e ids (selección del visor). Los numéricos aceptan varios valores separados por coma
+    ("unidad=1,3": proyectos de cualquiera de las dos).
     Un valor no numérico en un filtro numérico se ignora (no da error).
     """
     campos = {"unidad": "unidad_id", "programa": "programa_id", "tipo": "tipo_id", "estado": "estado_id",
               "region": "municipios__region", "provincia": "municipios__provincia", "municipio": "municipios",
-              "gestion": "gestion"}
+              "gestion": "gestion", "ids": "pk"}
     for parametro, campo in campos.items():
-        valor = str(parametros.get(parametro) or "").strip()
-        if valor.isdigit():
-            qs = qs.filter(**{campo: int(valor)})
-    ids = [int(x) for x in str(parametros.get("ids") or "").split(",") if x.strip().isdigit()]
-    if ids:
-        qs = qs.filter(pk__in=ids)
+        valores = [int(x) for x in str(parametros.get(parametro) or "").split(",") if x.strip().isdigit()]
+        if valores:
+            qs = qs.filter(**{f"{campo}__in": valores})
     q = str(parametros.get("q") or "").strip()
     if q:
         qs = qs.filter(Q(nombre__icontains=q) | Q(codigo__icontains=q) | Q(comunidad__icontains=q) | Q(sisin__icontains=q))

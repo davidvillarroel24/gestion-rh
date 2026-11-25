@@ -5,6 +5,7 @@
 
 {% block head %}
   {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/selector-multiple.css' %}">
   <link rel="stylesheet" href="{% static 'reportes/reportes.css' %}">
 {% endblock %}
 
@@ -12,13 +13,13 @@
 <h1>Resumen y reportes</h1>
 
 <form id="filtros" class="filtros">
-  <label>Unidad<select name="unidad"></select></label>
-  <label>Programa<select name="programa"></select></label>
-  <label>Estado<select name="estado"></select></label>
-  <label>Región<select name="region"></select></label>
-  <label>Provincia<select name="provincia"></select></label>
-  <label>Municipio<select name="municipio"></select></label>
-  <label>Gestión<input name="gestion" type="number" min="1990" max="2100" placeholder="Todas"></label>
+  <label>Unidad<span data-selector="unidad"></span></label>
+  <label>Programa<span data-selector="programa"></span></label>
+  <label>Estado<span data-selector="estado"></span></label>
+  <label>Región<span data-selector="region"></span></label>
+  <label>Provincia<span data-selector="provincia"></span></label>
+  <label>Municipio<span data-selector="municipio"></span></label>
+  <label>Gestión<span data-selector="gestion"></span></label>
   <label>Texto<input name="q" type="search" placeholder="Código, nombre…"></label>
   <div class="acciones-filtros">
     <button class="boton" type="submit">Aplicar</button>
@@ -66,5 +67,6 @@
 <script>
   window.REPORTES = { datos: "{% url 'reportes:datos' %}", excel: "{% url 'reportes:excel' %}", ficha: "{% url 'reportes:ficha' %}", visor: "{% url 'visor:visor' %}" };
 </script>
+<script src="{% static 'js/selector-multiple.js' %}"></script>
 <script src="{% static 'reportes/reportes.js' %}"></script>
 {% endblock %}

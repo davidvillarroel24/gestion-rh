@@ -64,6 +64,7 @@ def config(request):
                        for m in alcance.municipios_visibles(u).order_by("nombre")],
         "provincias": [{"id": p.id, "nombre": p.nombre} for p in Provincia.objects.order_by("nombre")],
         "regiones": [{"id": r.id, "nombre": r.nombre} for r in Region.objects.order_by("nombre")],
+        "gestiones": consultas.gestiones(u),
         "tipos_elemento": [
             {"id": t.id, "nombre": t.nombre, "unidad": t.unidad_id, "tipo_geometria": t.tipo_geometria}
             for t in TipoElemento.objects.filter(activo=True, unidad__in=unidades)
@@ -203,6 +204,7 @@ def proyectos(request):
             "programa": p.programa.nombre if p.programa_id else "", "tipo": p.tipo.nombre if p.tipo_id else "",
             "estado": p.estado.nombre if p.estado_id else "", "gestion": p.gestion,
             "municipios": ", ".join(m.nombre for m in p.municipios.all()),
+            "municipio_ids": [m.id for m in p.municipios.all()],
             "costo_total": _num(costo), "desembolsado": _num(pagado),
             "avance_financiero": round(float(pagado) * 100 / float(costo), 1) if costo else None,
             "avance_fisico": _num(p.ultimo_avance_fisico),

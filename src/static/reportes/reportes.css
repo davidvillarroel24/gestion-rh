@@ -34,3 +34,4 @@
 .nivel { padding: 1px 8px; border-radius: 10px; font-size: 0.8rem; }
 .nivel-alta { background: #f8d7da; color: #842029; }
 .nivel-media { background: #fff3cd; color: #664d03; }
+.acciones-filtros .boton { margin: 0; text-decoration: none; white-space: nowrap; }
